@@ -1,0 +1,30 @@
+{
+  "name": "jelle/craft-json-plugin",
+  "type": "craft-plugin",
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.9.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "jelle\\craftjsonplugin\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "_json-plugin",
+    "name": "JSON Plugin",
+    "developer": "Jelle",
+    "documentationUrl": "",
+    "class": "jelle\\craftjsonplugin\\JsonPlugin"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}

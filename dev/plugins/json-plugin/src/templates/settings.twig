@@ -1,0 +1,25 @@
+{# @var plugin \jelle\craftjsonplugin\JsonPlugin #}
+{# @var settings \jelle\craftjsonplugin\models\Settings #}
+
+{% import '_includes/forms' as forms %}
+
+{{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
+
+{{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
+
+{{ forms.checkboxGroupField({ label: 'Asset Volumes', instructions: 'Welke <strong>asset mappen</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedVolumes', name: 'includedVolumes', options: volumeOptions, values: settings.includedVolumes }) }}
+
+<hr />
+
+<div class="field">
+  <div class="heading">
+    <label>Bulk Synchronisatie</label>
+    <div class="instructions">
+      <p>Gebruik deze knop om alle geselecteerde secties en volumes in één keer naar de chatbot te sturen.</p>
+    </div>
+  </div>
+  <div class="input">
+    <a href="{{ actionUrl('_json-plugin/sync/sync-all') }}" class="btn submit">Synchroniseer Alles</a>
+  </div>
+</div>
+{# ... #}
