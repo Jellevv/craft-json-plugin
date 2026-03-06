@@ -5,23 +5,40 @@ namespace jelle\craftjsonplugin\services;
 use Craft;
 use craft\elements\Entry;
 use craft\elements\Asset;
-use GuzzleHttp\Client;
 use yii\base\Component;
 use craft\elements\db\ElementQueryInterface;
 use craft\helpers\App;
+use OpenAI;
 
 class JsonService extends Component
 {
-    private function getNodeUrl(): string
-    {
-        $port = App::parseEnv('$NODE_PORT') ?: '3000';
-
-        return "http://localhost:{$port}";
-    }
-
     private function getSettings()
     {
         return \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
+    }
+
+    private function getStoragePath(): string
+    {
+        $path = Craft::getAlias('@storage/json_plugin/json_data.json');
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        return $path;
+    }
+
+    private function getJsonData(): array
+    {
+        $path = $this->getStoragePath();
+        if (!file_exists($path)) {
+            return ['entries' => []];
+        }
+        return json_decode(file_get_contents($path), true) ?: ['entries' => []];
+    }
+
+    private function saveJsonData(array $data): bool
+    {
+        return (bool) file_put_contents($this->getStoragePath(), json_encode($data, JSON_PRETTY_PRINT));
     }
 
     public function pushSingleEntry(int $elementId): bool
@@ -31,14 +48,24 @@ class JsonService extends Component
             if (!$element instanceof Entry)
                 return false;
 
-            $client = new Client(['timeout' => 3.0]);
+            $data = $this->getJsonData();
+            $newEntry = $this->prepareEntryData($element);
 
-            $client->post($this->getNodeUrl() . '/update-single-entry', [
-                'json' => $this->prepareEntryData($element),
-            ]);
-            return true;
+            $found = false;
+            foreach ($data['entries'] as &$entry) {
+                if ($entry['id'] == $newEntry['id']) {
+                    $entry = $newEntry;
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $data['entries'][] = $newEntry;
+            }
+
+            return $this->saveJsonData($data);
         } catch (\Exception $e) {
-            Craft::error("Fout bij pushen entry {$elementId}: " . $e->getMessage(), 'json-plugin');
+            Craft::error("Fout bij opslaan entry {$elementId}: " . $e->getMessage(), 'json-plugin');
             return false;
         }
     }
@@ -185,11 +212,9 @@ class JsonService extends Component
         $settings = $this->getSettings();
         $count = 0;
         try {
-            $client = new Client(['timeout' => 5.0]);
+            // Reset data
+            $this->saveJsonData(['entries' => []]);
 
-            $client->post($this->getNodeUrl() . '/clear-all-data');
-
-            usleep(500000);
             if (!empty($settings->includedSections)) {
                 $entries = Entry::find()->section($settings->includedSections)->all();
                 foreach ($entries as $e) {
@@ -205,10 +230,51 @@ class JsonService extends Component
 
     public function deleteEntry(int $elementId): void
     {
-        try {
-            (new Client(['timeout' => 3.0]))->post($this->getNodeUrl() . '/delete-entry', ['json' => ['id' => $elementId]]);
-        } catch (\Exception $e) {
-            Craft::error($e->getMessage());
+        $data = $this->getJsonData();
+        $data['entries'] = array_filter($data['entries'], fn($e) => $e['id'] != $elementId);
+        $this->saveJsonData($data);
+    }
+
+    public function getAiResponse(string $vraag, string $sessionId): string
+    {
+        $apiKey = App::parseEnv('$OPENAI_API_KEY');
+        if (!$apiKey)
+            return "Fout: Geen OpenAI API Key gevonden in .env";
+
+        $client = OpenAI::client($apiKey);
+        $context = json_encode($this->getJsonData()['entries'], JSON_PRETTY_PRINT);
+
+        $cacheKey = "chatbot_history_" . $sessionId;
+        $history = Craft::$app->getCache()->get($cacheKey) ?: [];
+
+        if (empty($history)) {
+            $history[] = [
+                'role' => 'system',
+                'content' => "Je bent een assistent chatbot genaamd GreenTech Assistant die uitsluitend antwoord geeft op basis van de verstrekte data over GreenTech Solutions.
+                1. PERSOONLIJKHEID: Wees vriendelijk. Gebruik Markdown voor links: [Tekst](URL). Toon nooit kale URL's.
+                2. PRIVACY: Deel NOOIT technische ID's, slugs of metadata. 
+                3. MEDIA: Toon alleen foto's als er expliciet om gevraagd wordt.
+                4. BEPERKING: Verzin niets buiten de verstrekte data."
+            ];
         }
+
+        $history[] = ['role' => 'user', 'content' => "Context Data: $context \n\nGebruikersvraag: $vraag"];
+
+        if (count($history) > 7) {
+            $history = array_merge([$history[0]], array_slice($history, -6));
+        }
+
+        $response = $client->chat()->create([
+            'model' => 'gpt-4o-mini',
+            'messages' => $history,
+            'temperature' => 0.5,
+        ]);
+
+        $answer = $response->choices[0]->message->content;
+        $history[] = ['role' => 'assistant', 'content' => $answer];
+
+        Craft::$app->getCache()->set($cacheKey, $history, 86400);
+
+        return $answer;
     }
 }

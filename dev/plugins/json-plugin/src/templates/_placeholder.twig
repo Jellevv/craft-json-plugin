@@ -15,9 +15,7 @@
     background: white;
     font-family: Arial, sans-serif;
   }
-  .chat-wrapper.collapsed {
-    height: 60px;
-  }
+  .chat-wrapper.collapsed { height: 60px; }
   .chat-header {
     height: 60px;
     background: #1f7a5c;
@@ -45,10 +43,6 @@
     font-size: 14px;
     line-height: 1.4;
     word-wrap: break-word;
-  }
-  .chat-entry a {
-    color: #1f7a5c;
-    text-decoration: underline;
   }
   .chat-entry.user {
     align-self: flex-end;
@@ -86,27 +80,6 @@
     cursor: pointer;
     font-weight: bold;
   }
-  #reset-chat {
-    display: inline-block;
-    color: #1f7a5c;
-    border: 1px solid #1f7a5c;
-    border-radius: 1rem;
-    padding: 0.3rem 0.8rem;
-    background: white;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: 0.3s;
-    font-size: 12px;
-  }
-  #reset-chat.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-  .chat-wrapper.collapsed .chat-container,
-  .chat-wrapper.collapsed .input-container {
-    display: none;
-  }
 </style>
 
 <div class="chat-wrapper collapsed">
@@ -116,11 +89,6 @@
   </header>
 
   <main id="chat-container" class="chat-container">
-    <div style="position: sticky; top: 0; z-index: 10; display: flex; justify-content: center; pointer-events: none;">
-      <div style="pointer-events: auto;">
-        <span id="reset-chat">Reset gesprek</span>
-      </div>
-    </div>
     <div class="chat-entry assistant">Hallo! Ik ben de GreenTech Assistant. Hoe kan ik je helpen?</div>
   </main>
 
@@ -131,92 +99,79 @@
 </div>
 
 <script>
-  ;(function () {
-    const chatWrapper = document.querySelector('.chat-wrapper')
-    const chatToggle = document.getElementById('chat-toggle')
-    const chatIcon = document.getElementById('chat-icon')
-    const chatHeaderText = document.getElementById('chat-header-text')
-    const chatContainer = document.getElementById('chat-container')
-    const vraagInput = document.getElementById('vraag')
-    const verstuurButton = document.getElementById('verstuur')
-    const resetButton = document.getElementById('reset-chat')
+  (function () {
+    const chatWrapper = document.querySelector('.chat-wrapper');
+    const chatToggle = document.getElementById('chat-toggle');
+    const chatIcon = document.getElementById('chat-icon');
+    const chatHeaderText = document.getElementById('chat-header-text');
+    const chatContainer = document.getElementById('chat-container');
+    const vraagInput = document.getElementById('vraag');
+    const verstuurButton = document.getElementById('verstuur');
   
-    const contextName = "{{ entry.title ?? 'onze website' }}"
-    const nodePort = "{{ getenv('NODE_PORT') ?: '3000' }}"
-    const apiUrl = `${window.location.protocol}//${window.location.hostname}:${nodePort}`
-  
-    let sessionId = localStorage.getItem('chatSessionId')
-    if (!sessionId) {
-        sessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('chatSessionId', sessionId)
-    }
+    let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('chatSessionId', sessionId);
   
     chatToggle.addEventListener('click', () => {
-      const isCollapsed = chatWrapper.classList.toggle('collapsed')
-      chatIcon.textContent = isCollapsed ? '+' : '-'
-      chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : 'GreenTech Assistant'
-    })
-  
-    resetButton.addEventListener('click', async () => {
-      if (confirm('Gesprek wissen?')) {
-        try {
-            await fetch(`${apiUrl}/clear-session`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sessionId })
-            })
-            localStorage.removeItem('chatSessionId')
-            location.reload()
-        } catch (err) { console.error(err) }
-      }
-    })
-
-    chatContainer.addEventListener('scroll', () => {
-        if (chatContainer.scrollTop < (chatContainer.scrollHeight - chatContainer.offsetHeight - 50)) {
-            resetButton.classList.add('visible')
-        } else {
-            resetButton.classList.remove('visible')
-        }
-    })
+      const isCollapsed = chatWrapper.classList.toggle('collapsed');
+      chatIcon.textContent = isCollapsed ? '+' : '-';
+      chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : 'GreenTech Assistant';
+    });
   
     async function stuurVraag() {
-      const vraagTekst = vraagInput.value.trim()
-      if (!vraagTekst) return
+      const vraagTekst = vraagInput.value.trim();
+      if (!vraagTekst) return;
   
-      const userDiv = document.createElement('div')
-      userDiv.className = 'chat-entry user'
-      userDiv.textContent = vraagTekst
-      chatContainer.appendChild(userDiv)
+      // Gebruiker bericht tonen
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-entry user';
+      userDiv.textContent = vraagTekst;
+      chatContainer.appendChild(userDiv);
   
-      const assistantDiv = document.createElement('div')
-      assistantDiv.className = 'chat-entry assistant'
-      assistantDiv.textContent = 'Bezig met laden...'
-      chatContainer.appendChild(assistantDiv)
+      // Assistant "loading" bericht
+      const assistantDiv = document.createElement('div');
+      assistantDiv.className = 'chat-entry assistant';
+      assistantDiv.textContent = 'Aan het typen...';
+      chatContainer.appendChild(assistantDiv);
   
-      vraagInput.value = ''
-      chatContainer.scrollTop = chatContainer.scrollHeight
+      vraagInput.value = '';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
   
       try {
-        const res = await fetch(`${apiUrl}/vraag`, {
+        // LET OP: Geen poort 3000 meer, maar de Craft Action URL
+        const response = await fetch('/actions/json-plugin/chat/vraag', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vraag: vraagTekst, productName: contextName, sessionId })
-        })
-        const data = await res.json()
-        
-        const parsedAntwoord = data.antwoord
-            .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n/g, '<br>')
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({
+            vraag: vraagTekst,
+            sessionId: sessionId
+          })
+        });
 
-        assistantDiv.innerHTML = parsedAntwoord
-        chatContainer.scrollTop = chatContainer.scrollHeight
+        if (!response.ok) throw new Error('Server error');
+        
+        const data = await response.json();
+  
+        // Markdown-ish styling naar HTML
+        const parsedAntwoord = (data.antwoord || 'Geen antwoord ontvangen')
+          .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>');
+  
+        assistantDiv.innerHTML = parsedAntwoord;
       } catch (err) {
-        assistantDiv.textContent = 'Fout bij verbinden met de assistant.'
+        console.error('Fout:', err);
+        assistantDiv.textContent = 'Excuses, er ging iets mis bij het ophalen van het antwoord.';
+      } finally {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
       }
     }
   
-    verstuurButton.addEventListener('click', stuurVraag)
-    vraagInput.addEventListener('keydown', (e) => e.key === 'Enter' && stuurVraag())
-  })()
+    verstuurButton.addEventListener('click', stuurVraag);
+    vraagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') stuurVraag();
+    });
+  })();
 </script>
