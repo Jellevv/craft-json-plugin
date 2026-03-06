@@ -11,7 +11,7 @@
     }
   },
   "extra": {
-    "handle": "_json-plugin",
+    "handle": "json-plugin",
     "name": "JSON Plugin",
     "developer": "Jelle",
     "documentationUrl": "",

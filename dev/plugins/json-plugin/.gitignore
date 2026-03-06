@@ -1,8 +1,17 @@
+# OS bestanden
 *.DS_Store
-*.idea/*
+.idea/
 *.log
-*Thumbs.db
+Thumbs.db
+
+# Node.js
+node_modules/
+/src/chatbot/node_modules/
+npm-debug.log*
+
+# PHP / Composer
+vendor/
+
+# Lokale data / Chatbot opslag
+/src/chatbot/storage/*.json
 .env
-/node_modules
-/vendor
-/chatbot/storage/json_data.json
