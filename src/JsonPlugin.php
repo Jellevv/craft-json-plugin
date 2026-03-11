@@ -135,7 +135,7 @@ class JsonPlugin extends Plugin
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
             'volumeOptions' => $volumeOptions,
-        ]);
+        ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 
 }
