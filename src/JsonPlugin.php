@@ -141,7 +141,7 @@ class JsonPlugin extends Plugin
     public function getCpTemplateRoots(): array
     {
         return [
-            'json-plugin' => $this->getBasePath() . '/templates',
+            'json-plugin' => __DIR__ . '/templates',
         ];
     }
 }
