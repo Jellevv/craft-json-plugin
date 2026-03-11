@@ -18,11 +18,12 @@ class ChatController extends Controller
 
         $vraag = $request->getBodyParam('vraag');
         $sessionId = $request->getBodyParam('sessionId') ?: 'default';
+        $pageUrl = $request->getBodyParam('pageUrl') ?: '';
 
         $service = JsonPlugin::$plugin->get('jsonService');
 
         try {
-            $antwoord = $service->getAiResponse($vraag, $sessionId);
+            $antwoord = $service->getAiResponse($vraag, $sessionId, $pageUrl);
             return $this->asJson([
                 'antwoord' => $antwoord,
                 'sessionId' => $sessionId

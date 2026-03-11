@@ -235,7 +235,7 @@ class JsonService extends Component
         $this->saveJsonData($data);
     }
 
-    public function getAiResponse(string $vraag, string $sessionId): string
+    public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
     {
         $settings = $this->getSettings();
 
@@ -258,8 +258,11 @@ class JsonService extends Component
             ];
         }
 
-        $history[] = ['role' => 'user', 'content' => $vraag];
+        $vraagMetContext = $pageUrl
+            ? "De gebruiker bevindt zich op deze pagina: {$pageUrl}\n\nVraag: {$vraag}"
+            : $vraag;
 
+        $history[] = ['role' => 'user', 'content' => $vraagMetContext];
         if (count($history) > 7) {
             $history = array_merge([$history[0]], array_slice($history, -6));
         }
@@ -272,6 +275,7 @@ class JsonService extends Component
 
         $answer = $response->choices[0]->message->content;
         $history[] = ['role' => 'assistant', 'content' => $answer];
+
 
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);
 
