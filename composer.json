@@ -22,7 +22,7 @@
   },
   "extra": {
     "handle": "json-plugin",
-    "name": "GreenTech JSON Assistant",
+    "name": "JSON Assistant",
     "developer": "Jelle",
     "hasCpSettings": true,
     "class": "jelle\\craftjsonplugin\\JsonPlugin",
