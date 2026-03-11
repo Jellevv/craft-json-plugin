@@ -23,5 +23,6 @@ class SyncController extends Controller
             Craft::$app->getSession()->setError("Synchronisatie mislukt: " . ($result['message'] ?? 'Onbekende fout'));
         }
 
-return $this->redirect('settings/plugins/json-plugin');    }
+        return $this->redirect('settings/plugins/json-plugin');
+    }
 }

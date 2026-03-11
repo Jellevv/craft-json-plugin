@@ -8,7 +8,6 @@ use craft\base\Plugin;
 use craft\elements\Entry;
 use craft\helpers\ElementHelper;
 use craft\base\Element;
-use craft\events\ModelEvent;
 use yii\base\Event;
 use craft\elements\Asset;
 use jelle\craftjsonplugin\models\Settings;
@@ -32,7 +31,7 @@ class JsonPlugin extends Plugin
     {
         return [
             'components' => [
-                // Define component configs here...
+                'jsonService' => \jelle\craftjsonplugin\services\JsonService::class,
             ],
         ];
     }
@@ -50,12 +49,9 @@ class JsonPlugin extends Plugin
             function (Event $event) {
                 /** @var CraftVariable $variable */
                 $variable = $event->sender;
-                // Gebruik 'new' om een instantie te forceren
                 $variable->set('craftJsonPlugin', new JsonPluginVariable());
             }
         );
-        $this->set('jsonService', \jelle\craftjsonplugin\services\JsonService::class);
-
         $this->controllerMap['sync'] = SyncController::class;
 
         \yii\base\Event::on(
@@ -93,7 +89,7 @@ class JsonPlugin extends Plugin
                 $includedVolumes = $settings->includedVolumes ?? [];
 
                 if (in_array($asset->getVolume()->handle, $includedVolumes)) {
-                    $this->get('jsonService')->pushAsset($asset->id);
+                    Craft::warning("Asset sync voor volume '{$asset->getVolume()->handle}' werd getriggerd maar pushAsset() is niet geïmplementeerd.", 'json-plugin');
                 }
             }
         );
@@ -142,9 +138,4 @@ class JsonPlugin extends Plugin
         ]);
     }
 
-    private function attachEventHandlers(): void
-    {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
-    }
 }

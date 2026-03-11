@@ -3,6 +3,22 @@
 
 {% import '_includes/forms' as forms %}
 
+{{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true }) }}
+
+{{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+
+{{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
+
+{{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent' }) }}
+
+{{ forms.textareaField({ label: 'Systeem prompt', instructions: 'De instructies die de chatbot meekrijgt. Beschrijf hier de persoonlijkheid, beperkingen en het gedrag.', id: 'systemPrompt', name: 'systemPrompt', value: settings.systemPrompt, rows: 6 }) }}
+
+<hr />
+
+{{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen.', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
+
+<hr />
+
 {{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
 
 {{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
@@ -22,4 +38,3 @@
     <a href="{{ actionUrl('json-plugin/sync/sync-all') }}" class="btn">Synchroniseer nu alle content</a>
   </div>
 </div>
-{# ... #}

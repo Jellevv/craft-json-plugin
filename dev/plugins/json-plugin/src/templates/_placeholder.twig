@@ -1,3 +1,6 @@
+{% set chatbotName = chatbotName ?? 'Assistent' %}
+{% set primaryColor = primaryColor ?? '#1f7a5c' %}
+
 <style>
   .chat-wrapper {
     position: fixed;
@@ -15,10 +18,11 @@
     background: white;
     font-family: Arial, sans-serif;
   }
-  .chat-wrapper.collapsed { height: 60px; }
+  .chat-wrapper.collapsed {
+    height: 60px;
+  }
   .chat-header {
     height: 60px;
-    background: #1f7a5c;
     color: white;
     padding: 0 15px;
     display: flex;
@@ -46,7 +50,6 @@
   }
   .chat-entry.user {
     align-self: flex-end;
-    background: #1f7a5c;
     color: white;
     border-bottom-right-radius: 4px;
   }
@@ -75,103 +78,101 @@
     padding: 10px 18px;
     border-radius: 20px;
     border: none;
-    background: #1f7a5c;
     color: white;
     cursor: pointer;
     font-weight: bold;
   }
 </style>
 
-<div class="chat-wrapper collapsed">
-  <header class="chat-header" id="chat-toggle">
+<div class="chat-wrapper collapsed" data-csrf="{{ craft.app.request.csrfToken }}" data-color="#{{ primaryColor }}">
+  <header class="chat-header" id="chat-toggle" style="background: #{{ primaryColor }};">
     <h2 id="chat-header-text" style="margin:0; font-size: 20px;">Heeft u een vraag?</h2>
     <span id="chat-icon" style="font-size: 24px;">+</span>
   </header>
 
   <main id="chat-container" class="chat-container">
-    <div class="chat-entry assistant">Hallo! Ik ben de GreenTech Assistant. Hoe kan ik je helpen?</div>
+    <div class="chat-entry assistant">Hallo! Ik ben de {{ chatbotName }}. Hoe kan ik je helpen?</div>
   </main>
 
   <div id="input-container" class="input-container">
     <input type="text" id="vraag" placeholder="Typ je vraag..." autocomplete="off" />
-    <button id="verstuur">Verstuur</button>
+    <button id="verstuur" style="background: #{{ primaryColor }};">Verstuur</button>
   </div>
 </div>
 
 <script>
-  (function () {
-    const chatWrapper = document.querySelector('.chat-wrapper');
-    const chatToggle = document.getElementById('chat-toggle');
-    const chatIcon = document.getElementById('chat-icon');
-    const chatHeaderText = document.getElementById('chat-header-text');
-    const chatContainer = document.getElementById('chat-container');
-    const vraagInput = document.getElementById('vraag');
-    const verstuurButton = document.getElementById('verstuur');
+  ;(function () {
+    const chatWrapper = document.querySelector('.chat-wrapper')
+    const chatToggle = document.getElementById('chat-toggle')
+    const chatIcon = document.getElementById('chat-icon')
+    const chatHeaderText = document.getElementById('chat-header-text')
+    const chatContainer = document.getElementById('chat-container')
+    const vraagInput = document.getElementById('vraag')
+    const verstuurButton = document.getElementById('verstuur')
+    const primaryColor = chatWrapper.dataset.color
   
-    let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('chatSessionId', sessionId);
+    let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15)
+    localStorage.setItem('chatSessionId', sessionId)
   
     chatToggle.addEventListener('click', () => {
-      const isCollapsed = chatWrapper.classList.toggle('collapsed');
-      chatIcon.textContent = isCollapsed ? '+' : '-';
-      chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : 'GreenTech Assistant';
-    });
+      const isCollapsed = chatWrapper.classList.toggle('collapsed')
+      chatIcon.textContent = isCollapsed ? '+' : '-'
+      chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : '{{ chatbotName }}'
+    })
   
     async function stuurVraag() {
-      const vraagTekst = vraagInput.value.trim();
-      if (!vraagTekst) return;
+      const vraagTekst = vraagInput.value.trim()
+      if (!vraagTekst) return
   
-      // Gebruiker bericht tonen
-      const userDiv = document.createElement('div');
-      userDiv.className = 'chat-entry user';
-      userDiv.textContent = vraagTekst;
-      chatContainer.appendChild(userDiv);
+      const userDiv = document.createElement('div')
+      userDiv.className = 'chat-entry user'
+      userDiv.style.background = primaryColor
+      userDiv.textContent = vraagTekst
+      chatContainer.appendChild(userDiv)
   
-      // Assistant "loading" bericht
-      const assistantDiv = document.createElement('div');
-      assistantDiv.className = 'chat-entry assistant';
-      assistantDiv.textContent = 'Aan het typen...';
-      chatContainer.appendChild(assistantDiv);
+      const assistantDiv = document.createElement('div')
+      assistantDiv.className = 'chat-entry assistant'
+      assistantDiv.textContent = 'Aan het typen...'
+      chatContainer.appendChild(assistantDiv)
   
-      vraagInput.value = '';
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      vraagInput.value = ''
+      chatContainer.scrollTop = chatContainer.scrollHeight
   
       try {
-        // LET OP: Geen poort 3000 meer, maar de Craft Action URL
         const response = await fetch('/actions/json-plugin/chat/vraag', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-Token': '{{ craft.app.request.csrfToken }}'
           },
           body: JSON.stringify({
             vraag: vraagTekst,
             sessionId: sessionId
           })
-        });
-
-        if (!response.ok) throw new Error('Server error');
-        
-        const data = await response.json();
+        })
   
-        // Markdown-ish styling naar HTML
+        if (!response.ok) throw new Error('Server error')
+  
+        const data = await response.json()
+  
         const parsedAntwoord = (data.antwoord || 'Geen antwoord ontvangen')
           .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\n/g, '<br>');
+          .replace(/\n/g, '<br>')
   
-        assistantDiv.innerHTML = parsedAntwoord;
+        assistantDiv.innerHTML = parsedAntwoord
       } catch (err) {
-        console.error('Fout:', err);
-        assistantDiv.textContent = 'Excuses, er ging iets mis bij het ophalen van het antwoord.';
+        console.error('Fout:', err)
+        assistantDiv.textContent = 'Excuses, er ging iets mis bij het ophalen van het antwoord.'
       } finally {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        chatContainer.scrollTop = chatContainer.scrollHeight
       }
     }
   
-    verstuurButton.addEventListener('click', stuurVraag);
+    verstuurButton.addEventListener('click', stuurVraag)
     vraagInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') stuurVraag();
-    });
-  })();
+      if (e.key === 'Enter') stuurVraag()
+    })
+  })()
 </script>

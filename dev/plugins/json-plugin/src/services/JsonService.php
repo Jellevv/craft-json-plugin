@@ -237,43 +237,43 @@ class JsonService extends Component
 
     public function getAiResponse(string $vraag, string $sessionId): string
     {
-        $apiKey = App::parseEnv('$OPENAI_API_KEY');
-        if (!$apiKey)
-            return "Fout: Geen OpenAI API Key gevonden in .env";
+        $settings = $this->getSettings();
 
-        $client = OpenAI::client($apiKey);
-        $context = json_encode($this->getJsonData()['entries'], JSON_PRETTY_PRINT);
+        $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
+
+        if (!$apiKey) {
+            return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
+        }
+
+        $client = \OpenAI::client($apiKey);
 
         $cacheKey = "chatbot_history_" . $sessionId;
-        $history = Craft::$app->getCache()->get($cacheKey) ?: [];
+        $history = \Craft::$app->getCache()->get($cacheKey) ?: [];
 
         if (empty($history)) {
+            $context = json_encode($this->getJsonData()['entries'], JSON_PRETTY_PRINT);
             $history[] = [
                 'role' => 'system',
-                'content' => "Je bent een assistent chatbot genaamd GreenTech Assistant die uitsluitend antwoord geeft op basis van de verstrekte data over GreenTech Solutions.
-                1. PERSOONLIJKHEID: Wees vriendelijk. Gebruik Markdown voor links: [Tekst](URL). Toon nooit kale URL's.
-                2. PRIVACY: Deel NOOIT technische ID's, slugs of metadata. 
-                3. MEDIA: Toon alleen foto's als er expliciet om gevraagd wordt.
-                4. BEPERKING: Verzin niets buiten de verstrekte data."
+                'content' => $settings->systemPrompt . "\n\nContext Data: " . $context
             ];
         }
 
-        $history[] = ['role' => 'user', 'content' => "Context Data: $context \n\nGebruikersvraag: $vraag"];
+        $history[] = ['role' => 'user', 'content' => $vraag];
 
         if (count($history) > 7) {
             $history = array_merge([$history[0]], array_slice($history, -6));
         }
 
         $response = $client->chat()->create([
-            'model' => 'gpt-4o-mini',
+            'model' => $settings->openaiModel ?: 'gpt-4o-mini',
             'messages' => $history,
-            'temperature' => 0.5,
+            'temperature' => (float) ($settings->temperature ?? 0.5),
         ]);
 
         $answer = $response->choices[0]->message->content;
         $history[] = ['role' => 'assistant', 'content' => $answer];
 
-        Craft::$app->getCache()->set($cacheKey, $history, 86400);
+        \Craft::$app->getCache()->set($cacheKey, $history, 86400);
 
         return $answer;
     }

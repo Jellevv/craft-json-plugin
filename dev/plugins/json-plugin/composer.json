@@ -1,9 +1,19 @@
 {
   "name": "jelle/craft-json-plugin",
+  "description": "AI Chatbot en JSON export voor Craft CMS",
   "type": "craft-plugin",
+  "version": "1.0.0",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jelle",
+      "role": "Developer"
+    }
+  ],
   "require": {
-    "php": ">=8.2",
-    "craftcms/cms": "^5.9.0"
+    "php": "^8.0.2",
+    "craftcms/cms": "^5.0.0",
+    "openai-php/client": "^0.10.1"
   },
   "autoload": {
     "psr-4": {
@@ -12,19 +22,11 @@
   },
   "extra": {
     "handle": "json-plugin",
-    "name": "JSON Plugin",
+    "name": "GreenTech JSON Assistant",
     "developer": "Jelle",
-    "documentationUrl": "",
-    "class": "jelle\\craftjsonplugin\\JsonPlugin"
-  },
-  "config": {
-    "sort-packages": true,
-    "platform": {
-      "php": "8.2"
-    },
-    "allow-plugins": {
-      "yiisoft/yii2-composer": true,
-      "craftcms/plugin-installer": true
+    "hasCpSettings": true,
+    "components": {
+      "jsonService": "jelle\\craftjsonplugin\\services\\JsonService"
     }
   }
 }
