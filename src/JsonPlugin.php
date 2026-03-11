@@ -138,4 +138,10 @@ class JsonPlugin extends Plugin
         ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 
+    public function getCpTemplateRoots(): array
+    {
+        return [
+            'json-plugin' => $this->getBasePath() . '/templates',
+        ];
+    }
 }
