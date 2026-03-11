@@ -10,7 +10,10 @@ class Settings extends Model
     public float $temperature = 0.5;
     public string $chatbotName = 'Assistent';
     public string $systemPrompt = 'Je bent een behulpzame assistent die uitsluitend antwoord geeft op basis van de verstrekte data.';
-    public string $primaryColor = '#1f7a5c';
+    public string $primaryColor = '#006bc2';
+    public int $chatWidth = 300;
+    public int $chatHeight = 400;
+    public string $welcomeMessage = 'Hallo! Ik ben {name}, hoe kan ik je helpen?';
     public array $includedSections = [];
     public array $includedFields = [];
     public array $includedVolumes = [];
@@ -18,8 +21,10 @@ class Settings extends Model
     public function rules(): array
     {
         return [
-            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt'], 'string'],
+            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
+            [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
+            [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
             [['includedSections', 'includedFields', 'includedVolumes'], 'safe'],
         ];
     }

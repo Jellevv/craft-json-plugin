@@ -17,6 +17,12 @@
 
 {{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen.', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
 
+{{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
+
+{{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
+
+{{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?' }) }}
+
 <hr />
 
 {{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
@@ -31,7 +37,7 @@
   <div class="heading">
     <label>Bulk Synchronisatie</label>
     <div class="instructions">
-      <p>Gebruik deze knop om alle geselecteerde secties en volumes in één keer naar de chatbot te sturen.</p>
+      <p>Gebruik deze knop om alle geselecteerde secties, velden en volumes in één keer naar de chatbot te sturen.</p>
     </div>
   </div>
   <div class="input">

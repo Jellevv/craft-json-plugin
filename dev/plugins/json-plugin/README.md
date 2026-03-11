@@ -1,37 +1,60 @@
 # JSON Plugin
 
-**Open de `composer.json` van je Craft-project en voeg de GitHub-URL toe aan de `repositories` array:**
+Een Craft CMS plugin die je site-content synchroniseert naar een JSON-bestand en een AI-chatbot aanbiedt via OpenAI.
 
+## Installatie
+
+**1. Voeg de GitHub-URL toe aan de `composer.json` van je Craft-project:**
+```json
 "repositories": [
     {
         "type": "vcs",
         "url": "https://github.com/Jellevv/craft-json-plugin"
-
     }
 ],
+```
 
-**Run het volgende commando in je terminal (of via DDEV):**
+**2. Installeer de plugin:**
+```bash
 ddev composer require jelle/craft-json-plugin
+```
 
-*Let op: Je hebt een GitHub Personal Access Token (PAT) nodig met 'read' rechten als je dit op een server of in een nieuwe omgeving draait.*
+> Let op: Je hebt een GitHub Personal Access Token (PAT) nodig met `read` rechten als je dit op een server of in een nieuwe omgeving draait.
 
-**Activeren in Craft**
-Ga naar de Craft Control Panel -> Settings -> Plugins.
+**3. Activeer in Craft:**
 
-Zoek de JSON Plugin en klik op Install
+Ga naar Settings → Plugins → JSON Plugin → Install.
 
-**Configuratie**
-Na installatie moet de plugin geconfigureerd worden:
+---
 
-Ga naar Settings -> JSON Plugin.
+## Configuratie
 
-OpenAI API Key: Voer de sleutel in (of gebruik $OPENAI_API_KEY om de waarde uit de .env te laden).
+Ga naar Settings → Plugins → JSON Plugin.
 
-Selecties: Vink de secties en volumes aan die gesynchroniseerd moeten worden.
+Volg de stappen op het dashboard.
 
-Sync: Klik op de knop "Synchroniseer nu alle content" om het initiële JSON-bestand aan te maken in storage/json_plugin/.
+Na het configureren: klik op **"Synchroniseer nu alle content"** om het initiële JSON-bestand aan te maken in `storage/json_plugin/`.
 
-# Requirements
+---
 
-This plugin requires Craft CMS 5.9.0 or later, and PHP 8.2 or later.
+## Gebruik in templates
 
+Voeg de chatbot widget toe aan je Twig template:
+
+{{ craft.craftJsonPlugin.render()|raw }}
+
+---
+
+## Automatische synchronisatie
+
+De plugin synchroniseert automatisch wanneer:
+- Een entry wordt opgeslagen in een geselecteerde sectie
+- Een entry wordt verwijderd
+
+---
+
+## Requirements
+
+- Craft CMS 5.0.0 of later
+- PHP 8.0.2 of later
+- OpenAI API key
