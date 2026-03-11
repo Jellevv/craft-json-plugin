@@ -25,6 +25,7 @@
     "name": "GreenTech JSON Assistant",
     "developer": "Jelle",
     "hasCpSettings": true,
+    "class": "jelle\\craftjsonplugin\\JsonPlugin",
     "components": {
       "jsonService": "jelle\\craftjsonplugin\\services\\JsonService"
     }
