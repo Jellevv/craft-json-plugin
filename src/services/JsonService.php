@@ -63,6 +63,7 @@ class JsonService extends Component
                 $data['entries'][] = $newEntry;
             }
 
+            \Craft::$app->getCache()->flush();
             return $this->saveJsonData($data);
         } catch (\Exception $e) {
             Craft::error("Fout bij opslaan entry {$elementId}: " . $e->getMessage(), 'json-plugin');
@@ -212,7 +213,6 @@ class JsonService extends Component
         $settings = $this->getSettings();
         $count = 0;
         try {
-            // Reset data
             $this->saveJsonData(['entries' => []]);
 
             if (!empty($settings->includedSections)) {
@@ -222,6 +222,9 @@ class JsonService extends Component
                         $count++;
                 }
             }
+
+            \Craft::$app->getCache()->flush();
+
             return ['success' => true, 'count' => $count];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -275,7 +278,6 @@ class JsonService extends Component
 
         $answer = $response->choices[0]->message->content;
         $history[] = ['role' => 'assistant', 'content' => $answer];
-
 
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);
 

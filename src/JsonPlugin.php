@@ -39,7 +39,6 @@ class JsonPlugin extends Plugin
         parent::init();
         self::$plugin = $this;
 
-        // Registreer templates map
         Event::on(
             View::class,
             View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
