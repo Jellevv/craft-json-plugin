@@ -10,18 +10,14 @@ use craft\helpers\ElementHelper;
 use craft\base\Element;
 use yii\base\Event;
 use craft\elements\Asset;
+use craft\events\RegisterTemplateRootsEvent;
+use craft\web\View;
 use jelle\craftjsonplugin\models\Settings;
 use jelle\craftjsonplugin\services\JsonService;
 use jelle\craftjsonplugin\controllers\SyncController;
 use craft\web\twig\variables\CraftVariable;
 use jelle\craftjsonplugin\variables\JsonPluginVariable;
 
-/**
- * JSON Plugin plugin
- *
- * @method static JsonPlugin getInstance()
- * @method Settings getSettings()
- */
 class JsonPlugin extends Plugin
 {
     public string $schemaVersion = '1.0.0';
@@ -43,15 +39,24 @@ class JsonPlugin extends Plugin
         parent::init();
         self::$plugin = $this;
 
+        // Registreer templates map
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
+            function(RegisterTemplateRootsEvent $event) {
+                $event->roots['json-plugin'] = __DIR__ . '/templates';
+            }
+        );
+
         Event::on(
             CraftVariable::class,
             CraftVariable::EVENT_INIT,
             function (Event $event) {
-                /** @var CraftVariable $variable */
                 $variable = $event->sender;
                 $variable->set('craftJsonPlugin', new JsonPluginVariable());
             }
         );
+
         $this->controllerMap['sync'] = SyncController::class;
 
         \yii\base\Event::on(
@@ -59,15 +64,10 @@ class JsonPlugin extends Plugin
             \craft\base\Element::EVENT_AFTER_SAVE,
             function ($event) {
                 $element = $event->sender;
-
-
                 if ($element instanceof Entry && !$element->getIsDraft() && !$element->getIsRevision()) {
-
                     $settings = $this->getSettings();
                     $includedSections = $settings->includedSections ?? [];
-
                     $sectionHandle = $element->section->handle;
-
                     if (in_array($sectionHandle, $includedSections)) {
                         $this->get('jsonService')->pushSingleEntry($element->id);
                     }
@@ -80,14 +80,11 @@ class JsonPlugin extends Plugin
             Asset::EVENT_AFTER_SAVE,
             function ($event) {
                 $asset = $event->sender;
-
                 if (ElementHelper::isDraftOrRevision($asset)) {
                     return;
                 }
-
                 $settings = $this->getSettings();
                 $includedVolumes = $settings->includedVolumes ?? [];
-
                 if (in_array($asset->getVolume()->handle, $includedVolumes)) {
                     Craft::warning("Asset sync voor volume '{$asset->getVolume()->handle}' werd getriggerd maar pushAsset() is niet geïmplementeerd.", 'json-plugin');
                 }
@@ -110,6 +107,7 @@ class JsonPlugin extends Plugin
     {
         return Craft::createObject(Settings::class);
     }
+
     protected function settingsHtml(): ?string
     {
         $allSections = \Craft::$app->getEntries()->getAllSections();
