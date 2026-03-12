@@ -17,6 +17,8 @@ use jelle\craftjsonplugin\services\JsonService;
 use jelle\craftjsonplugin\controllers\SyncController;
 use craft\web\twig\variables\CraftVariable;
 use jelle\craftjsonplugin\variables\JsonPluginVariable;
+use craft\events\PluginEvent;
+use craft\services\Plugins;
 
 class JsonPlugin extends Plugin
 {
@@ -40,10 +42,18 @@ class JsonPlugin extends Plugin
         self::$plugin = $this;
 
         Event::on(
-            View::class,
-            View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
-            function(RegisterTemplateRootsEvent $event) {
-                $event->roots['json-plugin'] = __DIR__ . '/templates';
+            Plugins::class,
+            Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
+            function (PluginEvent $event) {
+                if ($event->plugin === $this) {
+                    \Craft::error("Settings opgeslagen, nieuwe prompt: " . $this->getSettings()->systemPrompt, 'json-plugin');
+                    $cache = \Craft::$app->getCache();
+                    $keys = $cache->get('chatbot_session_keys') ?: [];
+                    foreach ($keys as $key) {
+                        $cache->delete($key);
+                    }
+                    $cache->delete('chatbot_session_keys');
+                }
             }
         );
 
@@ -74,7 +84,7 @@ class JsonPlugin extends Plugin
             }
         );
 
-        \yii\base\Event::on(
+        /*\yii\base\Event::on(
             Asset::class,
             Asset::EVENT_AFTER_SAVE,
             function ($event) {
@@ -88,7 +98,7 @@ class JsonPlugin extends Plugin
                     Craft::warning("Asset sync voor volume '{$asset->getVolume()->handle}' werd getriggerd maar pushAsset() is niet geïmplementeerd.", 'json-plugin');
                 }
             }
-        );
+        );*/
 
         \yii\base\Event::on(
             \craft\base\Element::class,
@@ -121,17 +131,17 @@ class JsonPlugin extends Plugin
             $fieldOptions[] = ['label' => $field->name, 'value' => $field->handle];
         }
 
-        $allVolumes = \Craft::$app->getVolumes()->getAllVolumes();
+        /*$allVolumes = \Craft::$app->getVolumes()->getAllVolumes();
         $volumeOptions = [];
         foreach ($allVolumes as $volume) {
             $volumeOptions[] = ['label' => $volume->name, 'value' => $volume->handle];
-        }
+        }*/
 
         return \Craft::$app->view->renderTemplate('json-plugin/settings', [
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
-            'volumeOptions' => $volumeOptions,
+            //'volumeOptions' => $volumeOptions,
         ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 

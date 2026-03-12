@@ -4,7 +4,6 @@ namespace jelle\craftjsonplugin\controllers;
 
 use Craft;
 use craft\web\Controller;
-use craft\helpers\UrlHelper;
 use jelle\craftjsonplugin\JsonPlugin;
 use yii\web\Response;
 

@@ -1,46 +1,83 @@
 {# @var plugin \jelle\craftjsonplugin\JsonPlugin #}
 {# @var settings \jelle\craftjsonplugin\models\Settings #}
+<style>
+  .plugin-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #e3e5e8;
+  }
+  .plugin-tabs a {
+    padding: 8px 20px;
+    border-radius: 4px 4px 0 0;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    color: #606d7b;
+    background-color: #e3e5e8;
+    border: 1px solid #c8ced5;
+    border-bottom: none;
+    margin-bottom: -2px;
+  }
+
+  .plugin-tabs a.active {
+    background-color: #fff;
+    color: #1f2d3d;
+    border-color: #e3e5e8;
+  }
+</style>
 
 {% import '_includes/forms' as forms %}
 
-{{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true }) }}
+{% set selectedTab = craft.app.request.getParam('tab') ?? 'configuratie' %}
 
-{{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+<div class="plugin-tabs">
+  <a href="?tab=configuratie" class="{{ selectedTab == 'configuratie' ? 'active' : '' }}">Configuratie</a>
+  <a href="?tab=instellingen" class="{{ selectedTab == 'instellingen' ? 'active' : '' }}">Instellingen</a>
+</div>
 
-{{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
-
-{{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent' }) }}
-
-{{ forms.textareaField({ label: 'Systeem prompt', instructions: 'De instructies die de chatbot meekrijgt. Beschrijf hier de persoonlijkheid, beperkingen en het gedrag.', id: 'systemPrompt', name: 'systemPrompt', value: settings.systemPrompt, rows: 6 }) }}
-
-<hr />
-
-{{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen.', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
-
-{{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
-
-{{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
-
-{{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?' }) }}
-
-<hr />
-
-{{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
-
-{{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
-
-{{ forms.checkboxGroupField({ label: 'Asset Volumes', instructions: 'Welke <strong>asset mappen</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedVolumes', name: 'includedVolumes', options: volumeOptions, values: settings.includedVolumes }) }}
-
-<hr />
-
-<div class="field">
-  <div class="heading">
-    <label>Bulk Synchronisatie</label>
-    <div class="instructions">
-      <p>Gebruik deze knop om alle geselecteerde secties, velden en volumes in één keer naar de chatbot te sturen.</p>
+<div id="tab-configuratie" class="{{ selectedTab != 'configuratie' ? 'hidden' : '' }}">
+  <div class="field">
+    <div class="heading">
+      <label>Bulk Synchronisatie</label>
+      <div class="instructions">
+        <p>Gebruik deze knop om alle geselecteerde secties en velden in één keer naar de chatbot te sturen.</p>
+      </div>
+    </div>
+    <div class="input">
+      <a href="{{ actionUrl('json-plugin/sync/sync-all') }}" class="btn">Synchroniseer nu alle content</a>
     </div>
   </div>
-  <div class="input">
-    <a href="{{ actionUrl('json-plugin/sync/sync-all') }}" class="btn">Synchroniseer nu alle content</a>
-  </div>
+
+  <hr />
+
+  {{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
+
+  {{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
+
+  {# {{ forms.checkboxGroupField({ label: 'Asset Volumes', instructions: 'Welke <strong>asset mappen</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedVolumes', name: 'includedVolumes', options: volumeOptions, values: settings.includedVolumes }) }} #}
+</div>
+
+<div id="tab-instellingen" class="{{ selectedTab != 'instellingen' ? 'hidden' : '' }}">
+  {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true }) }}
+
+  {{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+
+  {{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
+
+  {{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
+
+  {{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent' }) }}
+
+  {{ forms.textareaField({ label: 'Systeem prompt', instructions: 'De instructies die de chatbot meekrijgt. Beschrijf hier de persoonlijkheid, beperkingen en het gedrag.', id: 'systemPrompt', name: 'systemPrompt', value: settings.systemPrompt, rows: 6 }) }}
+
+  <hr />
+
+  {{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen.', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
+
+  {{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
+
+  {{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
+
+  {{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?' }) }}
 </div>

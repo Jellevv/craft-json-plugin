@@ -2,7 +2,7 @@
 {% set primaryColor = primaryColor ?? '#006bc2' %}
 {% set chatWidth = chatWidth ?? 300 %}
 {% set chatHeight = chatHeight ?? 500 %}
-{% set welcomeMessage = welcomeMessage|replace({'{name}': chatbotName}) %}
+{% set welcomeMessage = welcomeMessage|replace({ '{name}': chatbotName }) %}
 
 <style>
   .chat-wrapper {
@@ -32,7 +32,6 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    flex-shrink: 0;
   }
   .chat-container {
     flex: 1;
@@ -139,6 +138,23 @@
     let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15)
     localStorage.setItem('chatSessionId', sessionId)
   
+    const savedHistory = JSON.parse(localStorage.getItem('chatHistory_' + sessionId) || '[]')
+    savedHistory.forEach((msg) => {
+      const div = document.createElement('div')
+      div.className = 'chat-entry ' + msg.role
+      if (msg.role === 'user') {
+        div.style.background = lightColor
+        div.style.color = primaryColor
+        div.textContent = msg.content
+      } else {
+        div.innerHTML = msg.content
+      }
+      chatContainer.appendChild(div)
+    })
+    if (savedHistory.length > 0) {
+      chatContainer.scrollTop = chatContainer.scrollHeight
+    }
+  
     chatToggle.addEventListener('click', () => {
       const isCollapsed = chatWrapper.classList.toggle('collapsed')
       chatIcon.textContent = isCollapsed ? '+' : '-'
@@ -156,6 +172,10 @@
       userDiv.style.color = primaryColor
       userDiv.textContent = vraagTekst
       chatContainer.appendChild(userDiv)
+  
+      const history = JSON.parse(localStorage.getItem('chatHistory_' + sessionId) || '[]')
+      history.push({ role: 'user', content: vraagTekst })
+      localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
   
       const assistantDiv = document.createElement('div')
       assistantDiv.className = 'chat-entry assistant'
@@ -190,6 +210,9 @@
           .replace(/\n/g, '<br>')
   
         assistantDiv.innerHTML = parsedAntwoord
+  
+        history.push({ role: 'assistant', content: parsedAntwoord })
+        localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
       } catch (err) {
         console.error('Fout:', err)
         assistantDiv.textContent = 'Excuses, er ging iets mis bij het ophalen van het antwoord.'

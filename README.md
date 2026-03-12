@@ -29,11 +29,15 @@ Ga naar Settings → Plugins → JSON Plugin → Install.
 
 ## Configuratie
 
-Ga naar Settings → Plugins → JSON Plugin.
+Ga naar **Settings → Plugins → JSON Plugin**. Het dashboard heeft twee tabs:
 
-Volg de stappen op het dashboard.
+### Tab 1: Configuratie
+- Selecteer welke **secties** de chatbot mag gebruiken
+- Selecteer welke **velden** meegestuurd worden
+- Klik op **"Synchroniseer nu alle content"** om de data te laden
 
-Na het configureren: klik op **"Synchroniseer nu alle content"** om het initiële JSON-bestand aan te maken in `storage/json_plugin/`.
+### Tab 2: Instellingen
+- **Instellingen** en **Opmaak** van de chatbot
 
 ---
 
@@ -45,11 +49,18 @@ Voeg de chatbot widget toe aan je Twig template:
 
 ---
 
-## Automatische synchronisatie
+## Automatische synchronisatie tussen craft en de plugin
 
 De plugin synchroniseert automatisch wanneer:
 - Een entry wordt opgeslagen in een geselecteerde sectie
 - Een entry wordt verwijderd
+
+---
+
+## Synchronisatie met de LLM
+
+- Voor de tab **Instellingen** is op *save* klikken genoeg
+- Voor de tab **Configuratie** moet je na *save* ook op *Synchroniseer nu alle content* klikken.
 
 ---
 

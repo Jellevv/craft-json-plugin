@@ -16,10 +16,10 @@ class JsonPluginVariable
 
         try {
             return $view->renderTemplate('json-plugin/_placeholder', [
-                'chatbotName'    => $settings->chatbotName ?: 'Assistent',
-                'primaryColor'   => $settings->primaryColor ?: '1f7a5c',
-                'chatWidth'      => $settings->chatWidth ?: 300,
-                'chatHeight'     => $settings->chatHeight ?: 500,
+                'chatbotName' => $settings->chatbotName ?: 'Assistent',
+                'primaryColor' => ltrim($settings->primaryColor ?: '006bc2', '#'),
+                'chatWidth' => $settings->chatWidth ?: 300,
+                'chatHeight' => $settings->chatHeight ?: 500,
                 'welcomeMessage' => $settings->welcomeMessage ?: 'Hallo! Hoe kan ik je helpen?',
             ], $view::TEMPLATE_MODE_CP);
         } catch (\Exception $e) {

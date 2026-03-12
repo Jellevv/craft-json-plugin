@@ -63,7 +63,6 @@ class JsonService extends Component
                 $data['entries'][] = $newEntry;
             }
 
-            \Craft::$app->getCache()->flush();
             return $this->saveJsonData($data);
         } catch (\Exception $e) {
             Craft::error("Fout bij opslaan entry {$elementId}: " . $e->getMessage(), 'json-plugin');
@@ -223,7 +222,12 @@ class JsonService extends Component
                 }
             }
 
-            \Craft::$app->getCache()->flush();
+            $cache = \Craft::$app->getCache();
+            $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
+            foreach ($keys as $key) {
+                $cache->delete($key);
+            }
+            $cache->delete('chatbot_session_keys');
 
             return ['success' => true, 'count' => $count];
         } catch (\Exception $e) {
@@ -236,6 +240,13 @@ class JsonService extends Component
         $data = $this->getJsonData();
         $data['entries'] = array_filter($data['entries'], fn($e) => $e['id'] != $elementId);
         $this->saveJsonData($data);
+
+        $cache = \Craft::$app->getCache();
+        $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
+        foreach ($keys as $key) {
+            $cache->delete($key);
+        }
+        $cache->delete('chatbot_session_keys');
     }
 
     public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
@@ -243,7 +254,6 @@ class JsonService extends Component
         $settings = $this->getSettings();
 
         $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
-
         if (!$apiKey) {
             return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
         }
@@ -254,7 +264,16 @@ class JsonService extends Component
         $history = \Craft::$app->getCache()->get($cacheKey) ?: [];
 
         if (empty($history)) {
-            $context = json_encode($this->getJsonData()['entries'], JSON_PRETTY_PRINT);
+            $keys = \Craft::$app->getCache()->get('chatbot_session_keys') ?: [];
+            $keys[] = $cacheKey;
+            \Craft::$app->getCache()->set('chatbot_session_keys', $keys, 86400);
+
+            $entries = array_map(function ($entry) {
+                unset($entry['_id']);
+                return $entry;
+            }, $this->getJsonData()['entries']);
+            $context = json_encode($entries, JSON_PRETTY_PRINT);
+
             $history[] = [
                 'role' => 'system',
                 'content' => $settings->systemPrompt . "\n\nContext Data: " . $context
@@ -274,6 +293,7 @@ class JsonService extends Component
             'model' => $settings->openaiModel ?: 'gpt-4o-mini',
             'messages' => $history,
             'temperature' => (float) ($settings->temperature ?? 0.5),
+            'max_tokens' => (int) ($settings->maxTokens ?? 300),
         ]);
 
         $answer = $response->choices[0]->message->content;
