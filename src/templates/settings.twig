@@ -37,15 +37,13 @@
 </div>
 
 <div id="tab-configuratie" class="{{ selectedTab != 'configuratie' ? 'hidden' : '' }}">
+  <input type="hidden" name="doSync" id="doSync" value="0" />
   <div class="field">
     <div class="heading">
-      <label>Bulk Synchronisatie</label>
-      <div class="instructions">
-        <p>Gebruik deze knop om alle geselecteerde secties en velden in één keer naar de chatbot te sturen.</p>
-      </div>
+      <label>Hier kan je alle secties en velden beheren die meegegeven moeten worden aan de chatbot</label>
     </div>
-    <div class="input">
-      <a href="{{ actionUrl('json-plugin/sync/sync-all') }}" class="btn">Synchroniseer nu alle content</a>
+    <div class="warning">
+      <p>Let op: Als je deze pagina saved, sync je ook alles automatisch met de chatbot.</p>
     </div>
   </div>
 
@@ -59,50 +57,72 @@
 </div>
 
 <div id="tab-instellingen" class="{{ selectedTab != 'instellingen' ? 'hidden' : '' }}">
-  {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
+  <input type="hidden" name="doSync" id="doSync" value="0" />
+  <div class="field">
+    <div class="heading">
+      <label>Hier kan je alle gegevens, voorwaarden en opmaak van de chatbot instellen.</label>
+      <div class="warning">
+        <p>Let op: Niet verplichte velden die je leeg laat nemen automatisch de waarden van de placeholders.</p>
+      </div>
+    </div>
 
-  {{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+    {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
 
-  {{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
+    {{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
 
-  {{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
+    {{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
 
-  {{ forms.textField({ label: 'Max vraaglengte (tekens)', instructions: 'Maximaal aantal tekens dat een gebruiker in één vraag mag typen. (max. 2000)', id: 'maxVraagLength', name: 'maxVraagLength', value: settings.maxVraagLength, placeholder: '500' }) }}
+    {{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
 
-  {{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
+    {{ forms.textField({ label: 'Max vraaglengte (tekens)', instructions: 'Maximaal aantal tekens dat een gebruiker in één vraag mag typen. (max. 2000)', id: 'maxVraagLength', name: 'maxVraagLength', value: settings.maxVraagLength, placeholder: '500' }) }}
 
-  {{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent', required: true }) }}
+    {{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
 
-  {{ forms.textareaField({ label: 'Systeem prompt', instructions: 'De instructies die de chatbot meekrijgt. Beschrijf hier de persoonlijkheid, beperkingen en het gedrag.', id: 'systemPrompt', name: 'systemPrompt', value: settings.systemPrompt, rows: 6 }) }}
+    {{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent', required: true }) }}
 
-  <hr />
+    {{ forms.textareaField({ label: 'Systeem prompt', instructions: 'De instructies die de chatbot meekrijgt. Beschrijf hier de persoonlijkheid, beperkingen en het gedrag.', id: 'systemPrompt', name: 'systemPrompt', value: settings.systemPrompt, rows: 6 }) }}
 
-  {{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen.', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
+    <hr />
 
-  {{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
+    {{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen. (Niks invullen = #006bc2)', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
 
-  {{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
+    {{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
 
-  {{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?', required: true }) }}
-  <br />
+    {{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
 
-  {{ forms.lightswitchField({ label: 'Gebruik fallback bericht', instructions: 'Schakel in om een vast bericht te tonen als de chatbot geen antwoord heeft. Schakel uit om de chatbot zelf een antwoord te laten formuleren.', id: 'useFallbackMessage', name: 'useFallbackMessage', on: settings.useFallbackMessage }) }}
+    {{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?', required: true }) }}
+    <br />
 
-  {{ forms.textareaField({ label: 'Fallback bericht', instructions: 'Bericht dat getoond wordt als de chatbot geen antwoord kan geven op basis van de beschikbare data.', id: 'fallbackMessage', name: 'fallbackMessage', value: settings.fallbackMessage, rows: 3 }) }}
+    {{ forms.lightswitchField({ label: 'Gebruik fallback bericht', instructions: 'Schakel in om een vast bericht te tonen als de chatbot geen antwoord heeft. Schakel uit om de chatbot zelf een antwoord te laten formuleren.', id: 'useFallbackMessage', name: 'useFallbackMessage', on: settings.useFallbackMessage }) }}
+
+    {{ forms.textareaField({ label: 'Fallback bericht', instructions: 'Bericht dat getoond wordt als de chatbot geen antwoord kan geven op basis van de beschikbare data.', id: 'fallbackMessage', name: 'fallbackMessage', value: settings.fallbackMessage, rows: 3, required: true }) }}
+  </div>
+
+  <script>
+    ;(function () {
+      const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
+      const textarea = document.querySelector('#settings-fallbackMessage')
+    
+      function updateState() {
+        const isOn = toggle.classList.contains('on')
+        textarea.disabled = !isOn
+        textarea.style.opacity = isOn ? '1' : '0.4'
+        textarea.required = isOn
+      }
+    
+      updateState()
+      toggle.addEventListener('click', updateState)
+    })()
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      const saveBtn = document.querySelector('button.btn.submit')
+      const doSync = document.getElementById('doSync')
+      const selectedTab = '{{ selectedTab }}'
+    
+      if (selectedTab === 'configuratie') {
+        saveBtn.textContent = 'Save & Sync'
+        doSync.value = '1'
+      }
+    })
+  </script>
 </div>
-
-<script>
-  ;(function () {
-    const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
-    const textarea = document.querySelector('#settings-fallbackMessage')
-  
-    function updateState() {
-      const isOn = toggle.classList.contains('on')
-      textarea.disabled = !isOn
-      textarea.style.opacity = isOn ? '1' : '0.4'
-    }
-  
-    updateState()
-    toggle.addEventListener('click', updateState)
-  })()
-</script>
