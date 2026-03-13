@@ -19,7 +19,7 @@
     border-bottom: none;
     margin-bottom: -2px;
   }
-
+  
   .plugin-tabs a.active {
     background-color: #fff;
     color: #1f2d3d;
@@ -65,7 +65,11 @@
 
   {{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
 
-  {{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
+  {{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
+
+  {{ forms.textField({ label: 'Max vraaglengte (tekens)', instructions: 'Maximaal aantal tekens dat een gebruiker in één vraag mag typen. (max. 2000)', id: 'maxVraagLength', name: 'maxVraagLength', value: settings.maxVraagLength, placeholder: '500' }) }}
+
+  {{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
 
   {{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent' }) }}
 

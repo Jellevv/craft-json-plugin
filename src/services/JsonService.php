@@ -22,7 +22,7 @@ class JsonService extends Component
         $path = Craft::getAlias('@storage/json_plugin/json_data.json');
         $dir = dirname($path);
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0755, true);
         }
         return $path;
     }

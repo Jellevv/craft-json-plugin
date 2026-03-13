@@ -9,6 +9,8 @@ class Settings extends Model
     public string $openaiModel = 'gpt-4o-mini';
     public float $temperature = 0.5;
     public int $maxTokens = 300;
+    public int $maxVraagLength = 500;
+    public int $rateLimit = 50;
     public string $chatbotName = 'Assistent';
     public string $systemPrompt = 'Je bent een behulpzame assistent die uitsluitend antwoord geeft op basis van de verstrekte data.';
     public string $primaryColor = '#006bc2';
@@ -25,7 +27,9 @@ class Settings extends Model
         return [
             [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
-            [['maxTokens'], 'integer', 'min' => 50, 'max' => 2000],
+            [['maxTokens'], 'integer', 'min' => 0, 'max' => 2000],
+            [['maxVraagLength'], 'integer', 'min' => 0, 'max' => 2000],
+            [['rateLimit'], 'integer', 'min' => 1, 'max' => 500],
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
             [['includedSections', 'includedFields'], 'safe'],

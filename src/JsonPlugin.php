@@ -46,7 +46,6 @@ class JsonPlugin extends Plugin
             Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
             function (PluginEvent $event) {
                 if ($event->plugin === $this) {
-                    \Craft::error("Settings opgeslagen, nieuwe prompt: " . $this->getSettings()->systemPrompt, 'json-plugin');
                     $cache = \Craft::$app->getCache();
                     $keys = $cache->get('chatbot_session_keys') ?: [];
                     foreach ($keys as $key) {
