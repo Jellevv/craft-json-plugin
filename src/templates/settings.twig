@@ -61,14 +61,20 @@
   <div class="field">
     <div class="heading">
       <label>Hier kan je alle gegevens, voorwaarden en opmaak van de chatbot instellen.</label>
-      <div class="warning">
-        <p>Let op: Niet verplichte velden die je leeg laat nemen automatisch de waarden van de placeholders.</p>
-      </div>
     </div>
+    <div class="warning">
+      <p>Let op: Niet verplichte velden die je leeg laat nemen automatisch de waarden van de placeholders.</p>
+    </div>
+
+    {{ forms.selectField({ label: 'AI Provider', instructions: 'Welke AI provider wil je gebruiken?', id: 'aiProvider', name: 'aiProvider', value: settings.aiProvider, options: [{ label: 'OpenAI', value: 'openai' }, { label: 'Groq', value: 'groq' }] }) }}
 
     {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
 
     {{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+
+    {{ forms.autosuggestField({ label: 'Groq API Key', instructions: 'Voer je Groq API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $GROQ_API_KEY', id: 'groqApiKey', name: 'groqApiKey', value: settings.groqApiKey, placeholder: 'gsk_...', suggestEnvVars: true }) }}
+
+    {{ forms.selectField({ label: 'Groq Model', instructions: 'Welk Groq model moet de chatbot gebruiken?', id: 'groqModel', name: 'groqModel', value: settings.groqModel, options: [{ label: 'Llama 3.3 70B (aanbevolen)', value: 'llama-3.3-70b-versatile' }, { label: 'Llama 3.1 8B (snel & goedkoop)', value: 'llama-3.1-8b-instant' }, { label: 'Llama 4 Scout 17B (preview)', value: 'meta-llama/llama-4-scout-17b-16e-instruct' }, { label: 'Qwen3 32B (preview)', value: 'qwen/qwen3-32b' }] }) }}
 
     {{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
 
@@ -112,6 +118,24 @@
     
       updateState()
       toggle.addEventListener('click', updateState)
+    })()
+    ;(function () {
+      const providerSelect = document.getElementById('settings-aiProvider')
+      const openaiFields = document.querySelector('#settings-openaiApiKey-field')
+      const openaiModelField = document.querySelector('#settings-openaiModel-field')
+      const groqFields = document.querySelector('#settings-groqApiKey-field')
+      const groqModelField = document.querySelector('#settings-groqModel-field')
+    
+      function updateProviderFields() {
+        const isOpenAI = providerSelect.value === 'openai'
+        openaiFields.style.display = isOpenAI ? '' : 'none'
+        openaiModelField.style.display = isOpenAI ? '' : 'none'
+        groqFields.style.display = isOpenAI ? 'none' : ''
+        groqModelField.style.display = isOpenAI ? 'none' : ''
+      }
+    
+      updateProviderFields()
+      providerSelect.addEventListener('change', updateProviderFields)
     })()
     
     document.addEventListener('DOMContentLoaded', function () {

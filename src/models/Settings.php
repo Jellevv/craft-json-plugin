@@ -8,6 +8,10 @@ class Settings extends Model
 {
     public string $openaiApiKey = '';
     public string $openaiModel = 'gpt-4o-mini';
+    public string $aiProvider = 'openai';
+    public string $groqApiKey = '';
+    public string $groqModel = 'llama-3.3-70b-versatile';
+
     public mixed $temperature = 0.5;
     public mixed $maxTokens = 300;
     public mixed $maxVraagLength = 500;
@@ -78,7 +82,21 @@ class Settings extends Model
                 }
             ],
 
-            [['openaiApiKey', 'openaiModel', 'chatbotName', 'welcomeMessage'], 'required'],
+            [['chatbotName', 'welcomeMessage'], 'required'],
+            [
+                ['openaiApiKey'],
+                'required',
+                'when' => function ($model) {
+                    return $model->aiProvider === 'openai';
+                }
+            ],
+            [
+                ['groqApiKey'],
+                'required',
+                'when' => function ($model) {
+                    return $model->aiProvider === 'groq';
+                }
+            ],
 
             [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
@@ -96,11 +114,13 @@ class Settings extends Model
                     return $model->useFallbackMessage === true;
                 }
             ],
+            [['aiProvider', 'groqApiKey', 'groqModel'], 'string'],
+            [['aiProvider'], 'in', 'range' => ['openai', 'groq']],
         ];
     }
     public function afterValidate(): void
-    {
-        Craft::error('Settings fouten na validatie: ' . json_encode($this->getErrors()), 'json-plugin');
-        parent::afterValidate();
-    }
+{
+    \Craft::error('Settings fouten na validatie: ' . json_encode($this->getErrors()), 'json-plugin');
+    parent::afterValidate();
+}
 }

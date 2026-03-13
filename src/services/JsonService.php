@@ -252,13 +252,26 @@ class JsonService extends Component
     public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
     {
         $settings = $this->getSettings();
+        $provider = $settings->aiProvider ?? 'openai';
 
-        $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
-        if (!$apiKey) {
-            return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
+        if ($provider === 'groq') {
+            $apiKey = \craft\helpers\App::parseEnv($settings->groqApiKey);
+            if (!$apiKey) {
+                return "Fout: Geen Groq API Key geconfigureerd in de plugin instellingen.";
+            }
+            $client = \OpenAI::factory()
+                ->withBaseUri('api.groq.com/openai/v1')
+                ->withApiKey($apiKey)
+                ->make();
+            $model = $settings->groqModel ?: 'llama-3.3-70b-versatile';
+        } else {
+            $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
+            if (!$apiKey) {
+                return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
+            }
+            $client = \OpenAI::client($apiKey);
+            $model = $settings->openaiModel ?: 'gpt-4o-mini';
         }
-
-        $client = \OpenAI::client($apiKey);
 
         $cacheKey = "chatbot_history_" . $sessionId;
         $history = \Craft::$app->getCache()->get($cacheKey) ?: [];
@@ -300,13 +313,14 @@ class JsonService extends Component
         }
 
         $response = $client->chat()->create([
-            'model' => $settings->openaiModel ?: 'gpt-4o-mini',
+            'model' => $model,
             'messages' => $history,
             'temperature' => (float) ($settings->temperature ?? 0.5),
             'max_tokens' => (int) ($settings->maxTokens ?? 300),
         ]);
 
         $answer = $response->choices[0]->message->content;
+
         $history[] = ['role' => 'assistant', 'content' => $answer];
 
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);
