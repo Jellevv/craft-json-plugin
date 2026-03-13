@@ -27,16 +27,16 @@ class Settings extends Model
     public function rules(): array
     {
         return [
-            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage'], 'string'],
+            [['openaiApiKey', 'openaiModel', 'chatbotName', 'welcomeMessage'], 'required'],
+            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
-            [['maxTokens'], 'integer', 'min' => 0, 'max' => 2000],
-            [['maxVraagLength'], 'integer', 'min' => 0, 'max' => 2000],
+            [['maxTokens'], 'integer', 'min' => 50, 'max' => 2000],
+            [['maxVraagLength'], 'integer', 'min' => 50, 'max' => 2000],
             [['rateLimit'], 'integer', 'min' => 1, 'max' => 500],
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
-            [['includedSections', 'includedFields'], 'safe'],
             [['useFallbackMessage'], 'boolean'],
-            [['fallbackMessage'], 'string'],
+            [['includedSections', 'includedFields'], 'safe'],
         ];
     }
 }
