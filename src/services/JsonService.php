@@ -12,14 +12,10 @@ use OpenAI;
 
 class JsonService extends Component
 {
-    // ── Instellingen ───────────────────────────────────────────
-
     private function getSettings()
     {
         return \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
     }
-
-    // ── Bestandsbeheer ─────────────────────────────────────────
 
     private function getStoragePath(): string
     {
@@ -43,36 +39,6 @@ class JsonService extends Component
     private function saveJsonData(array $data): bool
     {
         return (bool) file_put_contents($this->getStoragePath(), json_encode($data, JSON_PRETTY_PRINT));
-    }
-
-    // ── Entries synchroniseren ─────────────────────────────────
-
-    public function syncAllContent(): array
-    {
-        $settings = $this->getSettings();
-        $count = 0;
-        try {
-            $this->saveJsonData(['entries' => []]);
-
-            if (!empty($settings->includedSections)) {
-                $entries = Entry::find()->section($settings->includedSections)->all();
-                foreach ($entries as $e) {
-                    if ($this->pushSingleEntry($e->id))
-                        $count++;
-                }
-            }
-
-            $cache = \Craft::$app->getCache();
-            $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
-            foreach ($keys as $key) {
-                $cache->delete($key);
-            }
-            $cache->delete('chatbot_session_keys');
-
-            return ['success' => true, 'count' => $count];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
     }
 
     public function pushSingleEntry(int $elementId): bool
@@ -103,22 +69,6 @@ class JsonService extends Component
             return false;
         }
     }
-
-    public function deleteEntry(int $elementId): void
-    {
-        $data = $this->getJsonData();
-        $data['entries'] = array_filter($data['entries'], fn($e) => $e['id'] != $elementId);
-        $this->saveJsonData($data);
-
-        $cache = \Craft::$app->getCache();
-        $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
-        foreach ($keys as $key) {
-            $cache->delete($key);
-        }
-        $cache->delete('chatbot_session_keys');
-    }
-
-    // ── Data normaliseren ──────────────────────────────────────
 
     private function prepareEntryData(Entry $element): array
     {
@@ -179,22 +129,6 @@ class JsonService extends Component
         }, $elements);
     }
 
-    private function normalizeContentBuilder($blocks): array
-    {
-        $output = [];
-        $entries = ($blocks instanceof ElementQueryInterface) ? $blocks->all() : ($blocks ?? []);
-
-        foreach ($entries as $block) {
-            $blockData = ['type' => $block->getType()->handle, 'fields' => []];
-            foreach ($block->getFieldLayout()->getCustomFields() as $subField) {
-                $val = $block->getFieldValue($subField->handle);
-                $blockData['fields'][$subField->handle] = $this->normalizeValue($val);
-            }
-            $output[] = $blockData;
-        }
-        return $output;
-    }
-
     private function normalizeMoney($value): string
     {
         if (!$value)
@@ -217,6 +151,22 @@ class JsonService extends Component
         }
 
         return number_format($amountValue, 2, '.', '');
+    }
+
+    private function normalizeContentBuilder($blocks): array
+    {
+        $output = [];
+        $entries = ($blocks instanceof ElementQueryInterface) ? $blocks->all() : ($blocks ?? []);
+
+        foreach ($entries as $block) {
+            $blockData = ['type' => $block->getType()->handle, 'fields' => []];
+            foreach ($block->getFieldLayout()->getCustomFields() as $subField) {
+                $val = $block->getFieldValue($subField->handle);
+                $blockData['fields'][$subField->handle] = $this->normalizeValue($val);
+            }
+            $output[] = $blockData;
+        }
+        return $output;
     }
 
     private function normalizeValue($value)
@@ -257,7 +207,47 @@ class JsonService extends Component
         return is_numeric($value) ? $value : strip_tags((string) $value);
     }
 
-    // ── AI antwoord genereren ──────────────────────────────────
+    public function syncAllContent(): array
+    {
+        $settings = $this->getSettings();
+        $count = 0;
+        try {
+            $this->saveJsonData(['entries' => []]);
+
+            if (!empty($settings->includedSections)) {
+                $entries = Entry::find()->section($settings->includedSections)->all();
+                foreach ($entries as $e) {
+                    if ($this->pushSingleEntry($e->id))
+                        $count++;
+                }
+            }
+
+            $cache = \Craft::$app->getCache();
+            $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
+            foreach ($keys as $key) {
+                $cache->delete($key);
+            }
+            $cache->delete('chatbot_session_keys');
+
+            return ['success' => true, 'count' => $count];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function deleteEntry(int $elementId): void
+    {
+        $data = $this->getJsonData();
+        $data['entries'] = array_filter($data['entries'], fn($e) => $e['id'] != $elementId);
+        $this->saveJsonData($data);
+
+        $cache = \Craft::$app->getCache();
+        $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
+        foreach ($keys as $key) {
+            $cache->delete($key);
+        }
+        $cache->delete('chatbot_session_keys');
+    }
 
     public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
     {
@@ -284,9 +274,19 @@ class JsonService extends Component
             }, $this->getJsonData()['entries']);
             $context = json_encode($entries, JSON_PRETTY_PRINT);
 
+            $fallbackInstructie = $settings->useFallbackMessage
+                ? "BELANGRIJK: Als de vraag niet beantwoord kan worden op basis van de beschikbare data, moet je ALTIJD en ALLEEN deze exacte zin antwoorden, zonder enige aanpassing of toevoeging: \"" . $settings->fallbackMessage . "\""
+                : "";
+
+            $systemContent = $settings->systemPrompt . "\n\n" . $fallbackInstructie . "\n\nContext Data: " . $context;
+
+            if ($settings->useFallbackMessage) {
+                $systemContent .= "\n\nHERINNERING: Gebruik voor onbekende vragen ALTIJD exact: \"" . $settings->fallbackMessage . "\"";
+            }
+
             $history[] = [
                 'role' => 'system',
-                'content' => $settings->systemPrompt . "\n\nContext Data: " . $context
+                'content' => $systemContent
             ];
         }
 

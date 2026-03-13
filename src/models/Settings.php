@@ -17,6 +17,8 @@ class Settings extends Model
     public int $chatWidth = 300;
     public int $chatHeight = 400;
     public string $welcomeMessage = 'Hallo! Ik ben {name}, hoe kan ik je helpen?';
+    public bool $useFallbackMessage = true;
+    public string $fallbackMessage = 'Sorry, ik heb geen informatie over dit onderwerp. Neem gerust contact met ons op voor meer hulp.';
     public array $includedSections = [];
     public array $includedFields = [];
 
@@ -33,6 +35,8 @@ class Settings extends Model
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
             [['includedSections', 'includedFields'], 'safe'],
+            [['useFallbackMessage'], 'boolean'],
+            [['fallbackMessage'], 'string'],
         ];
     }
 }

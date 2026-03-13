@@ -84,4 +84,26 @@
   {{ forms.textField({ label: 'Hoogte (px)', instructions: 'Minimaal 280px, maximaal 900px.', id: 'chatHeight', name: 'chatHeight', value: settings.chatHeight, placeholder: '400' }) }}
 
   {{ forms.textField({ label: 'Welkomstbericht', instructions: 'Deze tekst krijgt de gebruiker als eerste in de chat te zien. Tip: Gebruik {name} om de chatbotnaam in te voegen.', id: 'welcomeMessage', name: 'welcomeMessage', value: settings.welcomeMessage, placeholder: 'Hallo! Ik ben {name}. Hoe kan ik je helpen?' }) }}
+
+  <br />
+
+  {{ forms.lightswitchField({ label: 'Gebruik fallback bericht', instructions: 'Schakel in om een vast bericht te tonen als de chatbot geen antwoord heeft. Schakel uit om de chatbot zelf een antwoord te laten formuleren.', id: 'useFallbackMessage', name: 'useFallbackMessage', on: settings.useFallbackMessage }) }}
+
+  {{ forms.textareaField({ label: 'Fallback bericht', instructions: 'Bericht dat getoond wordt als de chatbot geen antwoord kan geven op basis van de beschikbare data.', id: 'fallbackMessage', name: 'fallbackMessage', value: settings.fallbackMessage, rows: 3 }) }}
 </div>
+
+<script>
+  ;(function () {
+    const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
+    const textarea = document.querySelector('#settings-fallbackMessage')
+  
+    function updateState() {
+      const isOn = toggle.classList.contains('on')
+      textarea.disabled = !isOn
+      textarea.style.opacity = isOn ? '1' : '0.4'
+    }
+  
+    updateState()
+    toggle.addEventListener('click', updateState)
+  })()
+</script>
