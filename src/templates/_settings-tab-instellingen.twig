@@ -11,19 +11,19 @@
 
     {{ forms.selectField({ label: 'AI Provider', instructions: 'Welke AI provider wil je gebruiken?', id: 'aiProvider', name: 'aiProvider', value: settings.aiProvider, options: [{ label: 'OpenAI (ChatGpt)', value: 'openai' }, { label: 'Groq (Llama)', value: 'groq' }, { label: 'Anthropic (Claude)', value: 'claude' }, { label: 'Google (Gemini)', value: 'gemini' }] }) }}
 
-    {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
+    {{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
 
     {{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
 
-    {{ forms.autosuggestField({ label: 'Groq API Key', instructions: 'Voer je Groq API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $GROQ_API_KEY', id: 'groqApiKey', name: 'groqApiKey', value: settings.groqApiKey, placeholder: 'gsk_...', suggestEnvVars: true, required: true }) }}
+    {{ forms.autosuggestField({ label: 'Groq API Key', instructions: 'Voer je Groq API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $GROQ_API_KEY', id: 'groqApiKey', name: 'groqApiKey', value: settings.groqApiKey, placeholder: 'gsk_...', suggestEnvVars: true, required: true }) }}
 
     {{ forms.selectField({ label: 'Groq Model', instructions: 'Welk Groq model moet de chatbot gebruiken?', id: 'groqModel', name: 'groqModel', value: settings.groqModel, options: [{ label: 'Llama 3.3 70B (aanbevolen)', value: 'llama-3.3-70b-versatile' }, { label: 'Llama 3.1 8B (snel & goedkoop)', value: 'llama-3.1-8b-instant' }, { label: 'Llama 4 Scout 17B (preview)', value: 'meta-llama/llama-4-scout-17b-16e-instruct' }, { label: 'Qwen3 32B (preview)', value: 'qwen/qwen3-32b' }] }) }}
 
-    {{ forms.autosuggestField({ label: 'Claude API Key', instructions: 'Voer je Anthropic API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $CLAUDE_API_KEY', id: 'claudeApiKey', name: 'claudeApiKey', value: settings.claudeApiKey, placeholder: 'sk-ant-...', suggestEnvVars: true, required: true }) }}
+    {{ forms.autosuggestField({ label: 'Claude API Key', instructions: 'Voer je Anthropic API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $CLAUDE_API_KEY', id: 'claudeApiKey', name: 'claudeApiKey', value: settings.claudeApiKey, placeholder: 'sk-ant-...', suggestEnvVars: true, required: true }) }}
 
     {{ forms.selectField({ label: 'Claude Model', instructions: 'Welk Claude model moet de chatbot gebruiken?', id: 'claudeModel', name: 'claudeModel', value: settings.claudeModel, options: [{ label: 'Claude Sonnet 4.6 (aanbevolen)', value: 'claude-sonnet-4-6' }, { label: 'Claude Opus 4.6 (krachtig)', value: 'claude-opus-4-6' }, { label: 'Claude Haiku 4.5 (snel & goedkoop)', value: 'claude-haiku-4-5-20251001' }] }) }}
 
-    {{ forms.autosuggestField({ label: 'Gemini API Key', instructions: 'Voer je Google API sleutel in. Je kunt ook een ENV variabele gebruiken, bijv: $GEMINI_API_KEY', id: 'geminiApiKey', name: 'geminiApiKey', value: settings.geminiApiKey, placeholder: 'AIza...', suggestEnvVars: true, required: true }) }}
+    {{ forms.autosuggestField({ label: 'Gemini API Key', instructions: 'Voer je Google API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $GEMINI_API_KEY', id: 'geminiApiKey', name: 'geminiApiKey', value: settings.geminiApiKey, placeholder: 'AIza...', suggestEnvVars: true, required: true }) }}
 
     {{ forms.selectField({ label: 'Gemini Model', instructions: 'Welk Gemini model moet de chatbot gebruiken?', id: 'geminiModel', name: 'geminiModel', value: settings.geminiModel, options: [{ label: 'Gemini 2.0 Flash (aanbevolen)', value: 'gemini-2.0-flash' }, { label: 'Gemini 2.0 Flash Lite (snel & goedkoop)', value: 'gemini-2.0-flash-lite' }, { label: 'Gemini 1.5 Pro (krachtig)', value: 'gemini-1.5-pro' }] }) }}
 

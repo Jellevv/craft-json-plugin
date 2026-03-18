@@ -89,16 +89,38 @@ class Settings extends Model
             [['chatbotName', 'welcomeMessage'], 'required'],
             [
                 ['openaiApiKey'],
-                'required',
-                'when' => function ($model) {
-                    return $model->aiProvider === 'openai';
+                function ($attribute) {
+                    $value = $this->$attribute;
+                    if ($value && !str_starts_with($value, '$')) {
+                        $this->addError($attribute, 'API key moet via een ENV variabele ingesteld worden (bijv. $OPENAI_API_KEY).');
+                    }
                 }
             ],
             [
                 ['groqApiKey'],
-                'required',
-                'when' => function ($model) {
-                    return $model->aiProvider === 'groq';
+                function ($attribute) {
+                    $value = $this->$attribute;
+                    if ($value && !str_starts_with($value, '$')) {
+                        $this->addError($attribute, 'API key moet via een ENV variabele ingesteld worden (bijv. $GROQ_API_KEY).');
+                    }
+                }
+            ],
+            [
+                ['claudeApiKey'],
+                function ($attribute) {
+                    $value = $this->$attribute;
+                    if ($value && !str_starts_with($value, '$')) {
+                        $this->addError($attribute, 'API key moet via een ENV variabele ingesteld worden (bijv. $CLAUDE_API_KEY).');
+                    }
+                }
+            ],
+            [
+                ['geminiApiKey'],
+                function ($attribute) {
+                    $value = $this->$attribute;
+                    if ($value && !str_starts_with($value, '$')) {
+                        $this->addError($attribute, 'API key moet via een ENV variabele ingesteld worden (bijv. $GEMINI_API_KEY).');
+                    }
                 }
             ],
 
