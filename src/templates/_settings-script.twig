@@ -1,26 +1,25 @@
 <script>
-  (function () {
+  ;(function () {
     const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
     const textarea = document.querySelector('#settings-fallbackMessage')
-
+  
     function updateState() {
       const isOn = toggle.classList.contains('on')
       textarea.disabled = !isOn
       textarea.style.opacity = isOn ? '1' : '0.4'
       textarea.required = isOn
     }
-
+  
     updateState()
     toggle.addEventListener('click', updateState)
-  })
-
-  (function () {
+  })()
+  ;(function () {
     const providerSelect = document.getElementById('settings-aiProvider')
     const openaiFields = document.querySelector('#settings-openaiApiKey-field')
     const openaiModelField = document.querySelector('#settings-openaiModel-field')
     const groqFields = document.querySelector('#settings-groqApiKey-field')
     const groqModelField = document.querySelector('#settings-groqModel-field')
-
+  
     function updateProviderFields() {
       const isOpenAI = providerSelect.value === 'openai'
       openaiFields.style.display = isOpenAI ? '' : 'none'
@@ -28,16 +27,16 @@
       groqFields.style.display = isOpenAI ? 'none' : ''
       groqModelField.style.display = isOpenAI ? 'none' : ''
     }
-
+  
     updateProviderFields()
     providerSelect.addEventListener('change', updateProviderFields)
-  })
-
+  })()
+  
   document.addEventListener('DOMContentLoaded', function () {
     const saveBtn = document.querySelector('button.btn.submit')
     const doSync = document.getElementById('doSync')
     const selectedTab = '{{ selectedTab }}'
-
+  
     if (selectedTab === 'configuratie') {
       saveBtn.textContent = 'Save & Sync'
       doSync.value = '1'

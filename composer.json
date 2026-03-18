@@ -6,7 +6,8 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "Jelle",
+      "name": "Jelle Van Vlasselaer",
+      "email": "Jelle.VanVlasselaer@student.pxl.be",
       "role": "Developer"
     }
   ],
@@ -23,11 +24,9 @@
   "extra": {
     "handle": "json-plugin",
     "name": "JSON Assistant",
-    "developer": "Jelle",
+    "developer": "Jelle Van Vlasselaer",
+    "developerUrl": "https://github.com/Jellevv",
     "hasCpSettings": true,
-    "class": "jelle\\craftjsonplugin\\JsonPlugin",
-    "components": {
-      "jsonService": "jelle\\craftjsonplugin\\services\\JsonService"
-    }
+    "class": "jelle\\craftjsonplugin\\JsonPlugin"
   }
 }
