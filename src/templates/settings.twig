@@ -7,6 +7,8 @@
 
 {% include 'json-plugin/_settings-style' %}
 
+<input type="hidden" name="doSync" id="doSync" value="0" />
+
 <div class="plugin-tabs">
   <a href="?tab=configuratie" class="{{ selectedTab == 'configuratie' ? 'active' : '' }}">Configuratie</a>
   <a href="?tab=instellingen" class="{{ selectedTab == 'instellingen' ? 'active' : '' }}">Instellingen</a>

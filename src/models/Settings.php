@@ -11,18 +11,22 @@ class Settings extends Model
     public string $aiProvider = 'openai';
     public string $groqApiKey = '';
     public string $groqModel = 'llama-3.3-70b-versatile';
+    public string $claudeApiKey = '';
+    public string $claudeModel = 'claude-sonnet-4-6';
+    public string $geminiApiKey = '';
+    public string $geminiModel = 'gemini-2.0-flash';
 
-    public mixed $temperature = 0.5;
-    public mixed $maxTokens = 300;
-    public mixed $maxVraagLength = 500;
-    public mixed $rateLimit = 50;
+    public mixed $temperature = null;
+    public mixed $maxTokens = null;
+    public mixed $maxVraagLength = null;
+    public mixed $rateLimit = null;
     public string $chatbotName = 'Assistent';
     public string $systemPrompt = 'Je bent een behulpzame assistent die uitsluitend antwoord geeft op basis van de verstrekte data.';
     public string $primaryColor = '#006bc2';
-    public mixed $chatWidth = 300;
-    public mixed $chatHeight = 400;
+    public mixed $chatWidth = null;
+    public mixed $chatHeight = null;
     public string $welcomeMessage = 'Hallo! Ik ben {name}, hoe kan ik je helpen?';
-    public bool $useFallbackMessage = true;
+    public bool $useFallbackMessage = false;
     public string $fallbackMessage = 'Sorry, ik heb geen informatie over dit onderwerp. Neem gerust contact met ons op voor meer hulp.';
     public array $includedSections = [];
     public array $includedFields = [];
@@ -114,8 +118,22 @@ class Settings extends Model
                     return $model->useFallbackMessage === true;
                 }
             ],
-            [['aiProvider', 'groqApiKey', 'groqModel'], 'string'],
-            [['aiProvider'], 'in', 'range' => ['openai', 'groq']],
+            [['aiProvider', 'groqApiKey', 'groqModel', 'claudeApiKey', 'claudeModel', 'geminiApiKey', 'geminiModel'], 'string'],
+            [['aiProvider'], 'in', 'range' => ['openai', 'groq', 'claude', 'gemini']],
+            [
+                ['claudeApiKey'],
+                'required',
+                'when' => function ($model) {
+                    return $model->aiProvider === 'claude';
+                }
+            ],
+            [
+                ['geminiApiKey'],
+                'required',
+                'when' => function ($model) {
+                    return $model->aiProvider === 'gemini';
+                }
+            ],
         ];
     }
 }

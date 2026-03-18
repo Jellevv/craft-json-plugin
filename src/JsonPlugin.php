@@ -54,7 +54,8 @@ class JsonPlugin extends Plugin
                     $cache->delete('chatbot_session_keys');
 
                     $request = \Craft::$app->getRequest();
-                    if ($request->getBodyParam('doSync') === '1') {
+                    $settingsParams = $request->getBodyParam('settings') ?? [];
+                    if (($settingsParams['doSync'] ?? '0') === '1') {
                         $this->get('jsonService')->syncAllContent();
                     }
                 }

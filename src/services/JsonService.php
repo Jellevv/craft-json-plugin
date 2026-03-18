@@ -7,6 +7,11 @@ use craft\elements\Entry;
 use craft\elements\Asset;
 use yii\base\Component;
 use craft\elements\db\ElementQueryInterface;
+use jelle\craftjsonplugin\services\ai\AiInterface;
+use jelle\craftjsonplugin\services\ai\OpenAiProvider;
+use jelle\craftjsonplugin\services\ai\GroqProvider;
+use jelle\craftjsonplugin\services\ai\ClaudeProvider;
+use jelle\craftjsonplugin\services\ai\GeminiProvider;
 use craft\helpers\App;
 use OpenAI;
 
@@ -252,25 +257,11 @@ class JsonService extends Component
     public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
     {
         $settings = $this->getSettings();
-        $provider = $settings->aiProvider ?? 'openai';
 
-        if ($provider === 'groq') {
-            $apiKey = \craft\helpers\App::parseEnv($settings->groqApiKey);
-            if (!$apiKey) {
-                return "Fout: Geen Groq API Key geconfigureerd in de plugin instellingen.";
-            }
-            $client = \OpenAI::factory()
-                ->withBaseUri('api.groq.com/openai/v1')
-                ->withApiKey($apiKey)
-                ->make();
-            $model = $settings->groqModel ?: 'llama-3.3-70b-versatile';
-        } else {
-            $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
-            if (!$apiKey) {
-                return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
-            }
-            $client = \OpenAI::client($apiKey);
-            $model = $settings->openaiModel ?: 'gpt-4o-mini';
+        // ── AI provider instellen ──────────────────────────────────
+        $aiProvider = $this->getAiProvider();
+        if (is_string($aiProvider)) {
+            return $aiProvider; // foutmelding
         }
 
         $cacheKey = "chatbot_history_" . $sessionId;
@@ -312,19 +303,75 @@ class JsonService extends Component
             $history = array_merge([$history[0]], array_slice($history, -6));
         }
 
-        $response = $client->chat()->create([
-            'model' => $model,
-            'messages' => $history,
+        $answer = $aiProvider->chat($history, [
             'temperature' => (float) ($settings->temperature ?? 0.5),
             'max_tokens' => (int) ($settings->maxTokens ?? 300),
         ]);
 
-        $answer = $response->choices[0]->message->content;
-
         $history[] = ['role' => 'assistant', 'content' => $answer];
-
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);
 
         return $answer;
+    }
+
+    private function getAiProvider(): AiInterface|string
+    {
+        $settings = $this->getSettings();
+        $provider = $settings->aiProvider ?? 'openai';
+
+        return match ($provider) {
+            'groq' => $this->makeGroqProvider($settings),
+            'claude' => $this->makeClaudeProvider($settings),
+            'gemini' => $this->makeGeminiProvider($settings),
+            default => $this->makeOpenAiProvider($settings),
+        };
+    }
+
+    private function makeOpenAiProvider($settings): AiInterface|string
+    {
+        $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
+        if (!$apiKey) {
+            return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
+        }
+        return new OpenAiProvider(
+            $apiKey,
+            $settings->openaiModel ?: 'gpt-4o-mini'
+        );
+    }
+
+    private function makeGroqProvider($settings): AiInterface|string
+    {
+        $apiKey = \craft\helpers\App::parseEnv($settings->groqApiKey);
+        if (!$apiKey) {
+            return "Fout: Geen Groq API Key geconfigureerd in de plugin instellingen.";
+        }
+        return new GroqProvider(
+            $apiKey,
+            $settings->groqModel ?: 'llama-3.3-70b-versatile'
+        );
+    }
+
+    private function makeClaudeProvider($settings): AiInterface|string
+    {
+        $apiKey = \craft\helpers\App::parseEnv($settings->claudeApiKey);
+        if (!$apiKey) {
+            return "Fout: Geen Claude API Key geconfigureerd in de plugin instellingen.";
+        }
+        return new ClaudeProvider(
+            $apiKey,
+            $settings->claudeModel ?: 'claude-sonnet-4-6'
+        );
+    }
+
+    private function makeGeminiProvider($settings): AiInterface|string
+    {
+        $apiKey = \craft\helpers\App::parseEnv($settings->geminiApiKey);
+        if (!$apiKey) {
+            return "Fout: Geen Gemini API Key geconfigureerd in de plugin instellingen.";
+        }
+        return new GeminiProvider(
+            $apiKey,
+            $settings->geminiModel ?: 'gemini-2.0-flash'
+        );
     }
 }
