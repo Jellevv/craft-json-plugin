@@ -118,9 +118,4 @@ class Settings extends Model
             [['aiProvider'], 'in', 'range' => ['openai', 'groq']],
         ];
     }
-    public function afterValidate(): void
-{
-    \Craft::error('Settings fouten na validatie: ' . json_encode($this->getErrors()), 'json-plugin');
-    parent::afterValidate();
-}
 }

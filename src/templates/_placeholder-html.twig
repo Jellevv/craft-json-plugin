@@ -1,0 +1,24 @@
+<div class="chat-wrapper collapsed"
+  data-csrf="{{ craft.app.request.csrfToken }}"
+  data-color="#{{ primaryColor }}"
+  data-width="{{ chatWidth }}"
+  data-height="{{ chatHeight }}">
+
+  <header class="chat-header" style="background: #{{ primaryColor }};">
+    <h2 class="chat-header-text" style="margin:0; font-size: 16px;">Heeft u een vraag?</h2>
+    <div style="display:flex; gap: 8px; align-items: center;">
+      <span class="chat-reset" title="Reset gesprek">↺</span>
+      <span class="chat-icon">+</span>
+    </div>
+  </header>
+
+  <main class="chat-container">
+    <div class="chat-entry assistant">{{ welcomeMessage }}</div>
+  </main>
+
+  <div class="input-container">
+    <input type="text" class="vraag" placeholder="Typ je vraag..." autocomplete="off" />
+    <button class="verstuur" style="background: #{{ primaryColor }};">Verstuur</button>
+  </div>
+
+</div>
