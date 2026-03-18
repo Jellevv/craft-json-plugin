@@ -1,0 +1,19 @@
+{% import '_includes/forms' as forms %}
+
+<div id="tab-configuratie" class="{{ selectedTab != 'configuratie' ? 'hidden' : '' }}">
+  <input type="hidden" name="doSync" id="doSync" value="0" />
+  <div class="field">
+    <div class="heading">
+      <label>Hier kan je alle secties en velden beheren die meegegeven moeten worden aan de chatbot</label>
+    </div>
+    <div class="warning">
+      <p>Let op: Als je deze pagina saved, sync je ook alles automatisch met de chatbot.</p>
+    </div>
+  </div>
+
+  <hr />
+
+  {{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
+
+  {{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
+</div>
