@@ -25,5 +25,8 @@
 }
 
 #settings-stats-chart {
-    padding: 10px 0;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e3e5e8;
 }

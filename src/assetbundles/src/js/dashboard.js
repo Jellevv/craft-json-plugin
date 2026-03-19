@@ -66,9 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Totaal vragen',
+                        label: 'Aantal vragen',
                         data: totals,
-                        backgroundColor: 'rgba(0, 107, 194, 0.85)',
+                        backgroundColor: '#006bc2',
                         borderRadius: 6,
                         borderSkipped: false,
                         maxBarThickness: 40,
@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 size: 12,
                             },
                             maxRotation: 45,
+                            maxTicksLimit: 10,  
                         }
                     },
                     y: {
