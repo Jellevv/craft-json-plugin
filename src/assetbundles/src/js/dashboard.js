@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (doSync) doSync.value = '1'
     }
 
-    const canvas = document.getElementById('stats-chart')
+    const canvas = document.getElementById('settings-stats-chart')
     if (canvas && window.statsData && selectedTab === 'statistieken') {
         const labels = window.statsData.map(row => row.date)
         const totals = window.statsData.map(row => parseInt(row.total))
