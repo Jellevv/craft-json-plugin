@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const canvas = document.getElementById('stats-chart')
-    if (canvas && window.statsData) {
+    if (canvas && window.statsData && selectedTab === 'statistieken') {
         const labels = window.statsData.map(row => row.date)
         const totals = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
