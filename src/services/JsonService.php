@@ -258,10 +258,9 @@ class JsonService extends Component
     {
         $settings = $this->getSettings();
 
-        // ── AI provider instellen ──────────────────────────────────
         $aiProvider = $this->getAiProvider();
         if (is_string($aiProvider)) {
-            return $aiProvider; // foutmelding
+            return $aiProvider;
         }
 
         $cacheKey = "chatbot_history_" . $sessionId;
@@ -307,6 +306,16 @@ class JsonService extends Component
             'temperature' => (float) ($settings->temperature ?? 0.5),
             'max_tokens' => (int) ($settings->maxTokens ?? 300),
         ]);
+
+        $isFallback = $settings->useFallbackMessage && $answer === $settings->fallbackMessage;
+        \Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
+            'sessionId' => $sessionId,
+            'isFallback' => $isFallback,
+            'dateAsked' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'dateCreated' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'dateUpdated' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'uid' => \craft\helpers\StringHelper::UUID(),
+        ])->execute();
 
         $history[] = ['role' => 'assistant', 'content' => $answer];
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);

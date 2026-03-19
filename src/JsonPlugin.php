@@ -22,7 +22,7 @@ use craft\services\Plugins;
 
 class JsonPlugin extends Plugin
 {
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '1.1.0';
     public bool $hasCpSettings = true;
 
     public static function config(): array
@@ -148,7 +148,10 @@ class JsonPlugin extends Plugin
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
-            //'volumeOptions' => $volumeOptions,
+            'stats' => $this->getStats(),
+            'statsWeek' => $this->getStats('week'),
+            'statsMonth' => $this->getStats('month'),
+            'statsDay' => $this->getStats('day'),
         ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 
@@ -157,5 +160,30 @@ class JsonPlugin extends Plugin
         return [
             'json-plugin' => __DIR__ . '/templates',
         ];
+    }
+
+    public function getStats(string $period = 'week'): array
+    {
+        $db = \Craft::$app->getDb();
+
+        $days = match ($period) {
+            'day' => 1,
+            'month' => 30,
+            default => 7,
+        };
+
+        $since = (new \DateTime())->modify("-{$days} days")->format('Y-m-d H:i:s');
+
+        $rows = $db->createCommand("
+        SELECT DATE(dateAsked) as date, 
+               COUNT(*) as total,
+               SUM(isFallback) as fallbacks
+        FROM {{%jsonplugin_stats}}
+        WHERE dateAsked >= :since
+        GROUP BY DATE(dateAsked)
+        ORDER BY date ASC
+    ")->bindValue(':since', $since)->queryAll();
+
+        return $rows;
     }
 }

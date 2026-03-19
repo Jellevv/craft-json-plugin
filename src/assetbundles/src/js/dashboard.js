@@ -1,4 +1,6 @@
 import '../css/dashboard.css'
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables)
 document.addEventListener('DOMContentLoaded', function () {
 
     const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
@@ -52,4 +54,38 @@ document.addEventListener('DOMContentLoaded', function () {
         if (doSync) doSync.value = '1'
     }
 
+    const canvas = document.getElementById('stats-chart')
+    if (canvas && window.statsData) {
+        const labels = window.statsData.map(row => row.date)
+        const totals = window.statsData.map(row => parseInt(row.total))
+        const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Totaal vragen',
+                        data: totals,
+                        backgroundColor: 'rgba(0, 107, 194, 0.7)',
+                    },
+                    {
+                        label: 'Fallback antwoorden',
+                        data: fallbacks,
+                        backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        })
+    }
 })

@@ -10,7 +10,7 @@ class DashboardAsset extends AssetBundle
     {
         $this->sourcePath = '@jelle/craftjsonplugin/assetbundles/dist';
         $this->jsOptions = ['type' => 'module'];
-        $this->depends = [CpAsset::class];
+        $this->depends = [\craft\web\assets\cp\CpAsset::class];
         $this->css = ['css/dashboard.css'];
         $this->js = ['js/chunk.js', 'js/dashboard.js'];
         parent::init();

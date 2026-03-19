@@ -27,6 +27,7 @@
     "developer": "Jelle Van Vlasselaer",
     "developerUrl": "https://github.com/Jellevv",
     "hasCpSettings": true,
-    "class": "jelle\\craftjsonplugin\\JsonPlugin"
+    "class": "jelle\\craftjsonplugin\\JsonPlugin",
+    "migrationNamespace": "jelle\\craftjsonplugin\\migrations"
   }
 }
