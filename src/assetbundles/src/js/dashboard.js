@@ -88,4 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     }
+     console.log('selectedTab:', selectedTab)
+    console.log('canvas:', document.getElementById('stats-chart'))
+    console.log('statsData:', window.statsData)
 })
