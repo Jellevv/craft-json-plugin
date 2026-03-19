@@ -5,13 +5,9 @@
 
 {% set selectedTab = craft.app.request.getParam('tab') ?? 'configuratie' %}
 
-{% include 'json-plugin/_settings-style' %}
-
-<input type="hidden" name="doSync" id="doSync" value="0" />
-
-<div class="plugin-tabs">
-  <a href="?tab=configuratie" class="{{ selectedTab == 'configuratie' ? 'active' : '' }}">Configuratie</a>
-  <a href="?tab=instellingen" class="{{ selectedTab == 'instellingen' ? 'active' : '' }}">Instellingen</a>
+<input type="hidden" name="doSync" id="doSync" value="0"/> <div class="plugin-tabs" data-selected-tab="{{ selectedTab }}">
+	<a href="?tab=configuratie" class="{{ selectedTab == 'configuratie' ? 'active' : '' }}">Configuratie</a>
+	<a href="?tab=instellingen" class="{{ selectedTab == 'instellingen' ? 'active' : '' }}">Instellingen</a>
 </div>
 
 {% include 'json-plugin/_settings-tab-configuratie' with {
@@ -23,9 +19,5 @@
 
 {% include 'json-plugin/_settings-tab-instellingen' with {
     settings: settings,
-    selectedTab: selectedTab
-} %}
-
-{% include 'json-plugin/_settings-script' with {
     selectedTab: selectedTab
 } %}

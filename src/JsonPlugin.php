@@ -124,6 +124,8 @@ class JsonPlugin extends Plugin
 
     protected function settingsHtml(): ?string
     {
+        \Craft::$app->getView()->registerAssetBundle(\jelle\craftjsonplugin\assetbundles\DashboardAsset::class);
+
         $allSections = \Craft::$app->getEntries()->getAllSections();
         $sectionOptions = [];
         foreach ($allSections as $section) {

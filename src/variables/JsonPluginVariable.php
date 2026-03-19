@@ -14,6 +14,8 @@ class JsonPluginVariable
         $view = Craft::$app->getView();
         $settings = \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
 
+        $view->registerAssetBundle(\jelle\craftjsonplugin\assetbundles\ChatbotAsset::class);
+
         try {
             return $view->renderTemplate('json-plugin/_placeholder', [
                 'chatbotName' => $settings->chatbotName ?: 'Assistent',
@@ -21,6 +23,7 @@ class JsonPluginVariable
                 'chatWidth' => $settings->chatWidth ?: 300,
                 'chatHeight' => $settings->chatHeight ?: 500,
                 'welcomeMessage' => $settings->welcomeMessage ?: 'Hallo! Hoe kan ik je helpen?',
+                'maxVraagLength' => $settings->maxVraagLength ?? 500,
             ], $view::TEMPLATE_MODE_CP);
         } catch (\Exception $e) {
             Craft::error("Template niet gevonden: " . $e->getMessage(), 'json-plugin');

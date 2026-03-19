@@ -1,5 +1,4 @@
-<style>
-  .chat-wrapper {
+.chat-wrapper {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -13,11 +12,11 @@
     background-color: white;
     font-family: Arial, sans-serif;
     min-width: 280px;
-  }
-  .chat-wrapper.collapsed {
+}
+.chat-wrapper.collapsed {
     height: 40px;
-  }
-  .chat-header {
+}
+.chat-header {
     height: 40px;
     flex-shrink: 0;
     color: white;
@@ -26,8 +25,8 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-  }
-  .chat-container {
+}
+.chat-container {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
@@ -37,44 +36,43 @@
     gap: 10px;
     background-color: #f5f5f5;
     width: -webkit-fill-available;
-  }
-  .chat-entry {
+}
+.chat-entry {
     max-width: 85%;
     padding: 10px 14px;
     border-radius: 18px;
     font-size: 14px;
     line-height: 1.4;
     word-wrap: break-word;
-  }
-  .chat-entry.user {
+}
+.chat-entry.user {
     align-self: flex-end;
-    color: white;
     border-bottom-right-radius: 4px;
-  }
-  .chat-entry.assistant {
+}
+.chat-entry.assistant {
     align-self: flex-start;
     background-color: white;
     color: #333;
     border: 1px solid #ddd;
     border-bottom-left-radius: 4px;
-  }
-  .input-container {
+}
+.input-container {
     display: flex;
     padding: 10px;
     background-color: white;
     border-top: 1px solid #ccc;
     gap: 4px;
     flex-shrink: 0;
-  }
-  .vraag {
+}
+.vraag {
     flex: 1;
     min-width: 0;
     padding: 10px;
     border-radius: 20px;
     border: 1px solid #ccc;
     outline: none;
-  }
-  .verstuur {
+}
+.verstuur {
     padding: 10px 18px;
     border-radius: 20px;
     border: none;
@@ -83,15 +81,15 @@
     font-weight: bold;
     white-space: nowrap;
     flex-shrink: 0;
-  }
-  .chat-reset {
+}
+.chat-reset {
     cursor: pointer;
     font-size: 16px;
     padding: 2px 4px;
     border-radius: 4px;
     display: none;
-  }
-  .chat-confirm {
+}
+.chat-confirm {
     position: absolute;
     top: 5%;
     right: 10%;
@@ -106,24 +104,23 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  .chat-confirm-buttons {
+}
+.chat-confirm-buttons {
     display: flex;
     gap: 6px;
     justify-content: flex-end;
-  }
-  .chat-confirm-buttons button {
+}
+.chat-confirm-buttons button {
     padding: 4px 12px;
     border-radius: 6px;
     border: none;
     cursor: pointer;
     font-size: 12px;
-  }
-  .chat-confirm-confirmed {
+}
+.chat-confirm-confirmed {
     color: white;
-  }
-  .chat-confirm-cancelled {
+}
+.chat-confirm-cancelled {
     background-color: #e3e5e8;
     color: #333;
-  }
-</style>
+}

@@ -1,0 +1,25 @@
+{
+  "name": "craft-json-plugin",
+  "version": "1.0.0",
+  "description": "Een Craft CMS plugin die je site-content synchroniseert naar een JSON-bestand en een AI-chatbot aanbiedt.",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jellevv/craft-json-plugin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Jellevv/craft-json-plugin/issues"
+  },
+  "homepage": "https://github.com/Jellevv/craft-json-plugin#readme",
+  "devDependencies": {
+    "vite": "^8.0.1"
+  }
+}
