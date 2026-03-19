@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const labels = window.statsData.map(row => row.date)
         const totals = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
-        
+
         new Chart(canvas, {
             type: 'bar',
             data: {
@@ -68,23 +68,86 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Totaal vragen',
                         data: totals,
-                        backgroundColor: 'rgba(0, 107, 194, 0.7)',
-                        barThickness: 20,  // ← vaste breedte in pixels
+                        backgroundColor: 'rgba(0, 107, 194, 0.85)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        maxBarThickness: 40,
                     },
                     {
                         label: 'Fallback antwoorden',
                         data: fallbacks,
-                        backgroundColor: 'rgba(231, 76, 60, 0.7)',
-                        barThickness: 20,
+                        backgroundColor: 'rgba(229, 76, 60, 0.85)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        maxBarThickness: 40,
                     }
                 ]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            font: {
+                                family: 'system-ui, -apple-system, sans-serif',
+                                size: 13,
+                            },
+                            color: '#596673',
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#1f2d3d',
+                        bodyColor: '#596673',
+                        borderColor: '#e3e5e8',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            title: (items) => items[0].label,
+                        }
+                    }
+                },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        border: {
+                            display: false,
+                        },
+                        ticks: {
+                            color: '#596673',
+                            font: {
+                                family: 'system-ui, -apple-system, sans-serif',
+                                size: 12,
+                            },
+                            maxRotation: 45,
+                        }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: { stepSize: 1 }
+                        border: {
+                            display: false,
+                            dash: [4, 4],
+                        },
+                        grid: {
+                            color: '#e3e5e8',
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            color: '#596673',
+                            font: {
+                                family: 'system-ui, -apple-system, sans-serif',
+                                size: 12,
+                            },
+                            padding: 8,
+                        }
                     }
                 }
             }

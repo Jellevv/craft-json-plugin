@@ -138,20 +138,14 @@ class JsonPlugin extends Plugin
             $fieldOptions[] = ['label' => $field->name, 'value' => $field->handle];
         }
 
-        /*$allVolumes = \Craft::$app->getVolumes()->getAllVolumes();
-        $volumeOptions = [];
-        foreach ($allVolumes as $volume) {
-            $volumeOptions[] = ['label' => $volume->name, 'value' => $volume->handle];
-        }*/
+        $period = \Craft::$app->getRequest()->getParam('period', 'week');
 
         return \Craft::$app->view->renderTemplate('json-plugin/settings', [
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
-            'stats' => $this->getStats(),
-            'statsWeek' => $this->getStats('week'),
-            'statsMonth' => $this->getStats('month'),
-            'statsDay' => $this->getStats('day'),
+            'stats' => $this->getStats($period),
+            'statsPeriod' => $period,
         ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 
@@ -167,12 +161,12 @@ class JsonPlugin extends Plugin
         $db = \Craft::$app->getDb();
 
         $days = match ($period) {
-            'day' => 1,
-            'month' => 30,
-            default => 7,
+            'day' => 0,
+            'month' => 29,
+            default => 6,
         };
 
-        $since = (new \DateTime())->modify("-{$days} days")->format('Y-m-d H:i:s');
+        $since = (new \DateTime())->modify("-{$days} days")->format('Y-m-d 00:00:00');
 
         $rows = $db->createCommand("
         SELECT DATE(dateAsked) as date, 
@@ -184,6 +178,21 @@ class JsonPlugin extends Plugin
         ORDER BY date ASC
     ")->bindValue(':since', $since)->queryAll();
 
-        return $rows;
+        $dataByDate = [];
+        foreach ($rows as $row) {
+            $dataByDate[$row['date']] = $row;
+        }
+
+        $result = [];
+        for ($i = $days; $i >= 0; $i--) {
+            $date = (new \DateTime())->modify("-{$i} days")->format('Y-m-d');
+            $result[] = [
+                'date' => $date,
+                'total' => (int) ($dataByDate[$date]['total'] ?? 0),
+                'fallbacks' => (int) ($dataByDate[$date]['fallbacks'] ?? 0),
+            ];
+        }
+
+        return $result;
     }
 }

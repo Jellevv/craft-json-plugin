@@ -23,3 +23,7 @@
     color: #1f2d3d;
     border-color: #e3e5e8;
 }
+
+#settings-stats-chart {
+    padding: 10px 0;
+}
