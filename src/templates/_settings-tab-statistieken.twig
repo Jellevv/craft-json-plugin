@@ -1,22 +1,25 @@
 {% import '_includes/forms' as forms %}
 
 <div id="tab-statistieken" class="{{ selectedTab != 'statistieken' ? 'hidden' : '' }}">
-    <div class="field">
-        <div class="heading">
-            <label>Statistieken</label>
-        </div>
-    </div>
+	<div class="field">
+		<div class="heading">
+			<label>Hier kan je alle statestieken van de chatbot zien.</label>
+		</div>
+		<div class="warning">
+			<p>Let op: Fallback data is niet beschikbaar als de fallback switch uit staat in de 'Instellingen' tab.</p>
+		</div>
+	</div>
 
-    <div style="margin-bottom: 20px;">
-        <a href="?tab=statistieken&period=day" class="btn {{ craft.app.request.getParam('period') == 'day' ? 'submit' : '' }}">Vandaag</a>
-        <a href="?tab=statistieken&period=week" class="btn {{ craft.app.request.getParam('period', 'week') == 'week' ? 'submit' : '' }}">Week</a>
-        <a href="?tab=statistieken&period=month" class="btn {{ craft.app.request.getParam('period') == 'month' ? 'submit' : '' }}">Maand</a>
-    </div>
+	<div style="margin-bottom: 20px;">
+		<a href="?tab=statistieken&period=day" class="btn {{ craft.app.request.getParam('period') == 'day' ? 'submit' : '' }}">Vandaag</a>
+		<a href="?tab=statistieken&period=week" class="btn {{ craft.app.request.getParam('period', 'week') == 'week' ? 'submit' : '' }}">Week</a>
+		<a href="?tab=statistieken&period=month" class="btn {{ craft.app.request.getParam('period') == 'month' ? 'submit' : '' }}">Maand</a>
+	</div>
 
-    <canvas id="stats-chart" style="max-height: 400px;"></canvas>
+	<canvas id="stats-chart" style="max-height: 400px;"></canvas>
 
-    <script>
-        window.statsData = {{ statsWeek|json_encode|raw }};
-        window.statsPeriod = '{{ craft.app.request.getParam('period', 'week') }}';
-    </script>
+	<script>
+		window.statsData = {{ stats|json_encode|raw }};
+window.statsPeriod = '{{ statsPeriod }}';
+	</script>
 </div>

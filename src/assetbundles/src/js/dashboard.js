@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const labels = window.statsData.map(row => row.date)
         const totals = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
-
+        
         new Chart(canvas, {
             type: 'bar',
             data: {
@@ -69,11 +69,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         label: 'Totaal vragen',
                         data: totals,
                         backgroundColor: 'rgba(0, 107, 194, 0.7)',
+                        barThickness: 20,  // ← vaste breedte in pixels
                     },
                     {
                         label: 'Fallback antwoorden',
                         data: fallbacks,
                         backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                        barThickness: 20,
                     }
                 ]
             },
@@ -88,7 +90,4 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
     }
-     console.log('selectedTab:', selectedTab)
-    console.log('canvas:', document.getElementById('stats-chart'))
-    console.log('statsData:', window.statsData)
 })
