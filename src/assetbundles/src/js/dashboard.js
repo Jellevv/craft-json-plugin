@@ -54,10 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (doSync) doSync.value = '1'
     }
 
-    const canvas = document.getElementById('stats-chart')
-    console.log('canvas:', canvas)
-    console.log('statsData:', window.statsData)
-    console.log('selectedTab:', selectedTab)
+    const canvas = document.getElementById('settings-stats-chart')
 
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
@@ -84,26 +81,40 @@ document.addEventListener('DOMContentLoaded', function () {
         const totals = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
 
+        const chartType = window.statsPeriod === 'day' ? 'bar' : 'line'
+
         new Chart(canvas, {
-            type: 'bar',
+            type: chartType,
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Aantal vragen',
                         data: totals,
-                        backgroundColor: '#006bc2',
-                        borderRadius: 6,
+                        backgroundColor: chartType === 'bar' ? '#006bc2' : 'rgba(0, 107, 194, 0.1)',
+                        borderColor: '#006bc2',
+                        borderWidth: 2,
+                        borderRadius: chartType === 'bar' ? 6 : 0,
                         borderSkipped: false,
                         maxBarThickness: 40,
+                        fill: chartType === 'line',
+                        tension: 0.3,
+                        pointRadius: chartType === 'line' ? 4 : 0,
+                        pointHoverRadius: 6,
                     },
                     {
                         label: 'Fallback antwoorden',
                         data: fallbacks,
-                        backgroundColor: 'rgba(229, 76, 60, 0.85)',
-                        borderRadius: 6,
+                        backgroundColor: chartType === 'bar' ? 'rgba(229, 76, 60, 0.85)' : 'rgba(229, 76, 60, 0.1)',
+                        borderColor: 'rgba(229, 76, 60, 0.85)',
+                        borderWidth: 2,
+                        borderRadius: chartType === 'bar' ? 6 : 0,
                         borderSkipped: false,
                         maxBarThickness: 40,
+                        fill: chartType === 'line',
+                        tension: 0.3,
+                        pointRadius: chartType === 'line' ? 4 : 0,
+                        pointHoverRadius: 6,
                     }
                 ]
             },

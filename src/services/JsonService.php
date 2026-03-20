@@ -278,14 +278,10 @@ class JsonService extends Component
             $context = json_encode($entries, JSON_PRETTY_PRINT);
 
             $fallbackInstructie = $settings->useFallbackMessage
-                ? "BELANGRIJK: Als de vraag niet beantwoord kan worden op basis van de beschikbare data, moet je ALTIJD en ALLEEN deze exacte zin antwoorden, zonder enige aanpassing of toevoeging: \"" . $settings->fallbackMessage . "\""
+                ? "Onbekende vragen: antwoord exact \"" . $settings->fallbackMessage . "\""
                 : "";
 
             $systemContent = $settings->systemPrompt . "\n\n" . $fallbackInstructie . "\n\nContext Data: " . $context;
-
-            if ($settings->useFallbackMessage) {
-                $systemContent .= "\n\nHERINNERING: Gebruik voor onbekende vragen ALTIJD exact: \"" . $settings->fallbackMessage . "\"";
-            }
 
             $history[] = [
                 'role' => 'system',
