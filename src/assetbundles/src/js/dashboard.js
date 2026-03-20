@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
-        const title = document.getElementById('stats-period-title')
+        const title = document.getElementById('settings-stats-period-title')
         if (title) {
             const now = new Date()
             const year = now.getFullYear()
