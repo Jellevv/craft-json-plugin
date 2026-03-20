@@ -21,13 +21,13 @@
 
 		<strong id="stats-period-title"></strong>
 
-		{% if statsOffset != 0 %}
-			<a href="?tab=statistieken&period={{ statsPeriod }}&offset=0" class="btn">Vandaag</a>
-		{% endif %}
-
 		{% if statsOffset < 0 %}
 			<a href="?tab=statistieken&period={{ statsPeriod }}&offset={{ statsOffset + 1 }}" class="btn">→</a>
+			<a href="?tab=statistieken&period={{ statsPeriod }}&offset=0" class="btn submit">Nu</a>
 		{% endif %}
+
+		<input type="text" id="stats-datepicker" style="width: 32px; opacity: 0; position: absolute;" readonly/>
+		<a id="stats-calendar-btn" class="btn" style="cursor: pointer;">📅</a>
 	</div>
 
 	<canvas id="stats-chart" style="max-height: 400px;"></canvas>

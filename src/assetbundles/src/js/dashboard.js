@@ -1,6 +1,8 @@
 import '../css/dashboard.css'
 import { Chart, registerables } from 'chart.js'
 Chart.register(...registerables)
+import flatpickr from 'flatpickr'
+import 'flatpickr/dist/flatpickr.min.css'
 document.addEventListener('DOMContentLoaded', function () {
 
     const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
-        const title = document.getElementById('stats-period-title')
+        const title = document.getElementById('settings-stats-period-title')
         if (title && window.statsData.length > 0) {
             const firstDate = new Date(window.statsData[0].date)
             const lastDate = new Date(window.statsData[window.statsData.length - 1].date)
@@ -190,5 +192,53 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         })
+
+        const calendarBtn = document.getElementById('stats-calendar-btn')
+        const datepickerInput = document.getElementById('stats-datepicker')
+
+        if (calendarBtn && datepickerInput) {
+            const pickerOptions = {
+                disableMobile: true,
+                onChange: (selectedDates) => {
+                    const selected = selectedDates[0]
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+
+                    let offset = 0
+
+                    if (window.statsPeriod === 'day') {
+                        const diffTime = selected - today
+                        offset = Math.round(diffTime / (1000 * 60 * 60 * 24))
+                    } else if (window.statsPeriod === 'week') {
+                        const startOfThisWeek = new Date(today)
+                        const dayOfWeek = today.getDay() || 7
+                        startOfThisWeek.setDate(today.getDate() - (dayOfWeek - 1))
+
+                        const startOfSelectedWeek = new Date(selected)
+                        const selectedDayOfWeek = selected.getDay() || 7
+                        startOfSelectedWeek.setDate(selected.getDate() - (selectedDayOfWeek - 1))
+
+                        const diffTime = startOfSelectedWeek - startOfThisWeek
+                        offset = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7))
+                    } else if (window.statsPeriod === 'month') {
+                        const yearDiff = selected.getFullYear() - today.getFullYear()
+                        const monthDiff = selected.getMonth() - today.getMonth()
+                        offset = yearDiff * 12 + monthDiff
+                    }
+
+                    window.location.href = `?tab=statistieken&period=${window.statsPeriod}&offset=${offset}`
+                }
+            }
+
+            if (window.statsPeriod === 'month') {
+                pickerOptions.plugins = [new monthSelectPlugin({ shorthand: true, dateFormat: 'Y-m', altFormat: 'F Y' })]
+            } else if (window.statsPeriod === 'week') {
+                pickerOptions.weekNumbers = true
+                pickerOptions.locale = { firstDayOfWeek: 1 }
+            }
+
+            const picker = flatpickr(datepickerInput, pickerOptions)
+            calendarBtn.addEventListener('click', () => picker.open())
+        }
     }
 })
