@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (doSync) doSync.value = '1'
     }
 
-    const canvas = document.getElementById('settings-stats-chart')
-
+    const canvas = document.getElementById('stats-chart')
+    
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
         const title = document.getElementById('stats-period-title')
