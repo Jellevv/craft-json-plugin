@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const canvas = document.getElementById('stats-chart')
-    
+    console.log('canvas:', canvas)
+    console.log('statsData:', window.statsData)
+    console.log('selectedTab:', selectedTab)
+
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
         const title = document.getElementById('stats-period-title')
