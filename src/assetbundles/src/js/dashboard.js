@@ -55,8 +55,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const canvas = document.getElementById('settings-stats-chart')
+
     if (canvas && window.statsData && selectedTab === 'statistieken') {
-        const labels = window.statsData.map(row => row.date)
+
+        const title = document.getElementById('stats-period-title')
+        if (title) {
+            const now = new Date()
+            const year = now.getFullYear()
+            const month = now.toLocaleDateString('nl-BE', { month: 'long' })
+
+            if (window.statsPeriod === 'day') {
+                title.textContent = now.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+            } else if (window.statsPeriod === 'month') {
+                title.textContent = month + ' ' + year
+            } else {
+                title.textContent = 'Week van ' + new Date(window.statsData[0].date).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+            }
+        }
+
+        const labels = window.statsData.map(row => {
+            const date = new Date(row.date)
+            return date.getDate()
+        })
+
         const totals = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
 
@@ -109,14 +130,18 @@ document.addEventListener('DOMContentLoaded', function () {
                         boxPadding: 6,
                         usePointStyle: true,
                         callbacks: {
-                            title: (items) => items[0].label,
+                            title: (items) => {
+                                const date = new Date(window.statsData[items[0].dataIndex].date)
+                                return date.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+                            }
                         }
                     }
                 },
                 scales: {
                     x: {
                         grid: {
-                            display: false,
+                            display: true,
+                            color: '#f0f1f3',
                         },
                         border: {
                             display: false,
@@ -127,8 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 family: 'system-ui, -apple-system, sans-serif',
                                 size: 12,
                             },
-                            maxRotation: 45,
-                            maxTicksLimit: 10,  
+                            maxRotation: 0,
                         }
                     },
                     y: {

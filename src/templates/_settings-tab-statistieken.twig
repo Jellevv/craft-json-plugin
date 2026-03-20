@@ -16,6 +16,10 @@
 		<a href="?tab=statistieken&period=month" class="btn {{ craft.app.request.getParam('period') == 'month' ? 'submit' : '' }}">Maand</a>
 	</div>
 
+	<div style="margin-bottom: 16px;">
+		<strong id="stats-period-title"></strong>
+	</div>
+
 	<canvas id="stats-chart" style="max-height: 400px;"></canvas>
 
 	<script>
