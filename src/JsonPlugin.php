@@ -160,13 +160,26 @@ class JsonPlugin extends Plugin
     {
         $db = \Craft::$app->getDb();
 
-        $days = match ($period) {
-            'day' => 0,
-            'month' => 29,
-            default => 6,
-        };
+        if ($period === 'month') {
+            $startDate = new \DateTime('first day of this month');
+            $endDate = new \DateTime('last day of this month');
+            $since = $startDate->format('Y-m-d 00:00:00');
+            $totalDays = (int) $endDate->format('d');
+        } else {
+            $days = $period === 'day' ? 0 : 6;
 
-        $since = (new \DateTime())->modify("-{$days} days")->format('Y-m-d 00:00:00');
+            if ($period === 'week') {
+                $startDate = new \DateTime();
+                $dayOfWeek = (int) $startDate->format('N'); // 1=maandag, 7=zondag
+                $startDate->modify('-' . ($dayOfWeek - 1) . ' days');
+                $since = $startDate->format('Y-m-d 00:00:00');
+                $totalDays = 7;
+            } else {
+                $startDate = (new \DateTime())->modify("-{$days} days");
+                $since = $startDate->format('Y-m-d 00:00:00');
+                $totalDays = $days + 1;
+            }
+        }
 
         $rows = $db->createCommand("
         SELECT DATE(dateAsked) as date, 
@@ -184,8 +197,8 @@ class JsonPlugin extends Plugin
         }
 
         $result = [];
-        for ($i = $days; $i >= 0; $i--) {
-            $date = (new \DateTime())->modify("-{$i} days")->format('Y-m-d');
+        for ($i = 0; $i < $totalDays; $i++) {
+            $date = (clone $startDate)->modify("+{$i} days")->format('Y-m-d');
             $result[] = [
                 'date' => $date,
                 'total' => (int) ($dataByDate[$date]['total'] ?? 0),
