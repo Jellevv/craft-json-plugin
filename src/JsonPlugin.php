@@ -139,13 +139,15 @@ class JsonPlugin extends Plugin
         }
 
         $period = \Craft::$app->getRequest()->getParam('period', 'week');
+        $offset = (int) \Craft::$app->getRequest()->getParam('offset', 0);
 
         return \Craft::$app->view->renderTemplate('json-plugin/settings', [
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
-            'stats' => $this->getStats($period),
+            'stats' => $this->getStats($period, $offset),
             'statsPeriod' => $period,
+            'statsOffset' => $offset,
         ], \craft\web\View::TEMPLATE_MODE_CP);
     }
 
@@ -156,29 +158,29 @@ class JsonPlugin extends Plugin
         ];
     }
 
-    public function getStats(string $period = 'week'): array
+    public function getStats(string $period = 'week', int $offset = 0): array
     {
         $db = \Craft::$app->getDb();
 
         if ($period === 'month') {
             $startDate = new \DateTime('first day of this month');
-            $endDate = new \DateTime('last day of this month');
+            $startDate->modify("{$offset} months");
+            $endDate = clone $startDate;
+            $endDate->modify('last day of this month');
             $since = $startDate->format('Y-m-d 00:00:00');
             $totalDays = (int) $endDate->format('d');
+        } elseif ($period === 'week') {
+            $startDate = new \DateTime();
+            $dayOfWeek = (int) $startDate->format('N');
+            $startDate->modify('-' . ($dayOfWeek - 1) . ' days');
+            $startDate->modify("{$offset} weeks");
+            $since = $startDate->format('Y-m-d 00:00:00');
+            $totalDays = 7;
         } else {
-            $days = $period === 'day' ? 0 : 6;
-
-            if ($period === 'week') {
-                $startDate = new \DateTime();
-                $dayOfWeek = (int) $startDate->format('N'); // 1=maandag, 7=zondag
-                $startDate->modify('-' . ($dayOfWeek - 1) . ' days');
-                $since = $startDate->format('Y-m-d 00:00:00');
-                $totalDays = 7;
-            } else {
-                $startDate = (new \DateTime())->modify("-{$days} days");
-                $since = $startDate->format('Y-m-d 00:00:00');
-                $totalDays = $days + 1;
-            }
+            $startDate = new \DateTime();
+            $startDate->modify("{$offset} days");
+            $since = $startDate->format('Y-m-d 00:00:00');
+            $totalDays = 1;
         }
 
         $rows = $db->createCommand("
@@ -187,9 +189,13 @@ class JsonPlugin extends Plugin
                SUM(isFallback) as fallbacks
         FROM {{%jsonplugin_stats}}
         WHERE dateAsked >= :since
+        AND dateAsked < :until
         GROUP BY DATE(dateAsked)
         ORDER BY date ASC
-    ")->bindValue(':since', $since)->queryAll();
+    ")->bindValues([
+                    ':since' => $since,
+                    ':until' => (clone $startDate)->modify("+{$totalDays} days")->format('Y-m-d 00:00:00'),
+                ])->queryAll();
 
         $dataByDate = [];
         foreach ($rows as $row) {

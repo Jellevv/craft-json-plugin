@@ -58,18 +58,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (canvas && window.statsData && selectedTab === 'statistieken') {
 
-        const title = document.getElementById('settings-stats-period-title')
-        if (title) {
-            const now = new Date()
-            const year = now.getFullYear()
-            const month = now.toLocaleDateString('nl-BE', { month: 'long' })
+        const title = document.getElementById('stats-period-title')
+        if (title && window.statsData.length > 0) {
+            const firstDate = new Date(window.statsData[0].date)
+            const lastDate = new Date(window.statsData[window.statsData.length - 1].date)
 
             if (window.statsPeriod === 'day') {
-                title.textContent = now.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+                title.textContent = firstDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
             } else if (window.statsPeriod === 'month') {
-                title.textContent = month + ' ' + year
+                title.textContent = firstDate.toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })
             } else {
-                title.textContent = 'Week van ' + new Date(window.statsData[0].date).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+                title.textContent = firstDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) + ' – ' + lastDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
             }
         }
 
@@ -78,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return date.getDate()
         })
 
-        const totals = window.statsData.map(row => parseInt(row.total))
+        const questions = window.statsData.map(row => parseInt(row.total))
         const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
 
         const chartType = window.statsPeriod === 'day' ? 'bar' : 'line'
@@ -90,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [
                     {
                         label: 'Aantal vragen',
-                        data: totals,
+                        data: questions,
                         backgroundColor: chartType === 'bar' ? '#006bc2' : 'rgba(0, 107, 194, 0.1)',
                         borderColor: '#006bc2',
                         borderWidth: 2,

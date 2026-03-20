@@ -16,8 +16,18 @@
 		<a href="?tab=statistieken&period=month" class="btn {{ craft.app.request.getParam('period') == 'month' ? 'submit' : '' }}">Maand</a>
 	</div>
 
-	<div style="margin-bottom: 16px;">
+	<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+		<a href="?tab=statistieken&period={{ statsPeriod }}&offset={{ statsOffset - 1 }}" class="btn">←</a>
+
 		<strong id="stats-period-title"></strong>
+
+		{% if statsOffset != 0 %}
+			<a href="?tab=statistieken&period={{ statsPeriod }}&offset=0" class="btn">Vandaag</a>
+		{% endif %}
+
+		{% if statsOffset < 0 %}
+			<a href="?tab=statistieken&period={{ statsPeriod }}&offset={{ statsOffset + 1 }}" class="btn">→</a>
+		{% endif %}
 	</div>
 
 	<canvas id="stats-chart" style="max-height: 400px;"></canvas>
@@ -25,5 +35,6 @@
 	<script>
 		window.statsData = {{ stats|json_encode|raw }};
 window.statsPeriod = '{{ statsPeriod }}';
+window.statsOffset = {{ statsOffset }};
 	</script>
 </div>
