@@ -3,6 +3,8 @@ import { Chart, registerables } from 'chart.js'
 Chart.register(...registerables)
 import flatpickr from 'flatpickr'
 import 'flatpickr/dist/flatpickr.min.css'
+import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect'
+import 'flatpickr/dist/plugins/monthSelect/style.css'
 document.addEventListener('DOMContentLoaded', function () {
 
     const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
@@ -193,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
 
-        const calendarBtn = document.getElementById('stats-calendar-btn')
-        const datepickerInput = document.getElementById('stats-datepicker')
+        const calendarBtn = document.getElementById('settings-stats-calendar-btn')
+        const datepickerInput = document.getElementById('settings-stats-datepicker')
 
         if (calendarBtn && datepickerInput) {
             const pickerOptions = {
