@@ -242,5 +242,57 @@ document.addEventListener('DOMContentLoaded', function () {
             const picker = flatpickr(datepickerInput, pickerOptions)
             calendarBtn.addEventListener('click', () => picker.open())
         }
+
+        const hourlyCanvas = document.getElementById('settings-hourly-chart');
+
+        if (hourlyCanvas && window.hourlyStatsData && selectedTab === 'statistieken') {
+
+            const hourlyLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+
+            const hourlyValues = new Array(24).fill(0);
+            window.hourlyStatsData.forEach(row => {
+                hourlyValues[parseInt(row.hour)] = parseInt(row.total);
+            });
+
+            new Chart(hourlyCanvas, {
+                type: 'bar',
+                data: {
+                    labels: hourlyLabels,
+                    datasets: [{
+                        label: 'Aantal vragen',
+                        data: hourlyValues,
+                        backgroundColor: '#006bc2',
+                        borderRadius: 4,
+                        maxBarThickness: 30,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#596673' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#596673'
+                            },
+                            grid: { borderDash: [4, 4] }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }, // Legenda vaak overbodig bij 1 dataset
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `Tijdstip: ${items[0].label}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 })

@@ -146,6 +146,7 @@ class JsonPlugin extends Plugin
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
             'stats' => $this->getStats($period, $offset),
+            'hourlyStats' => $this->getHourlyStats(),
             'statsPeriod' => $period,
             'statsOffset' => $offset,
         ], \craft\web\View::TEMPLATE_MODE_CP);
@@ -213,5 +214,18 @@ class JsonPlugin extends Plugin
         }
 
         return $result;
+    }
+
+    public function getHourlyStats(): array
+    {
+        $db = \Craft::$app->getDb();
+
+        return $db->createCommand("
+        SELECT HOUR(dateAsked) as hour, 
+               COUNT(*) as total
+        FROM {{%jsonplugin_stats}}
+        GROUP BY hour
+        ORDER BY hour ASC
+    ")->queryAll();
     }
 }

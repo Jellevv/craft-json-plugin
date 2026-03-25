@@ -34,6 +34,7 @@
 
 	<script>
 		window.statsData = {{ stats|json_encode|raw }};
+window.hourlyStatsData = {{ hourlyStats|json_encode|raw }}; // Deze moet er nu bij
 window.statsPeriod = '{{ statsPeriod }}';
 window.statsOffset = {{ statsOffset }};
 	</script>
