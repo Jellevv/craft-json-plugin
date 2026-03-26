@@ -5,6 +5,7 @@ namespace jelle\craftjsonplugin\services;
 use Craft;
 use craft\elements\Entry;
 use craft\elements\Asset;
+use craft\helpers\DateTimeHelper;
 use yii\base\Component;
 use craft\elements\db\ElementQueryInterface;
 use jelle\craftjsonplugin\services\ai\AiInterface;
@@ -304,14 +305,23 @@ class JsonService extends Component
         ]);
 
         $isFallback = $settings->useFallbackMessage && $answer === $settings->fallbackMessage;
-        \Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
+
+        Craft::error('DEBUG: getAiResponse insert reached', 'json-plugin');
+
+        $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
+
+        Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
             'sessionId' => $sessionId,
             'isFallback' => $isFallback,
-            'dateAsked' => (new \DateTime())->format('Y-m-d H:i:s'),
-            'dateCreated' => (new \DateTime())->format('Y-m-d H:i:s'),
-            'dateUpdated' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
+            'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
+            'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
             'uid' => \craft\helpers\StringHelper::UUID(),
         ])->execute();
+
+
+
+
 
         $history[] = ['role' => 'assistant', 'content' => $answer];
         \Craft::$app->getCache()->set($cacheKey, $history, 86400);

@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
             calendarBtn.addEventListener('click', () => picker.open())
         }
 
-        const hourlyCanvas = document.getElementById('settings-hourly-chart');
+        const hourlyCanvas = document.getElementById('settings-hourly-stats-chart');
 
         if (hourlyCanvas && window.hourlyStatsData && selectedTab === 'statistieken') {
 
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     },
                     plugins: {
-                        legend: { display: false }, // Legenda vaak overbodig bij 1 dataset
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 title: (items) => `Tijdstip: ${items[0].label}`
@@ -295,4 +295,27 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     }
+    const hourlyCalendarBtn = document.getElementById('settings-hourly-stats-calendar-btn');
+    const hourlyDatepickerInput = document.getElementById('settings-hourly-stats-datepicker');
+
+    if (hourlyCalendarBtn && hourlyDatepickerInput) {
+        const hourlyPicker = flatpickr(hourlyDatepickerInput, {
+            disableMobile: true,
+            dateFormat: "Y-m-d",
+            onChange: (selectedDates) => {
+                const selected = selectedDates[0];
+                const year = selected.getFullYear();
+                const month = String(selected.getMonth() + 1).padStart(2, '0');
+                const day = String(selected.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+                const url = new URL(window.location.href);
+                url.searchParams.set('hourlyDate', formattedDate);
+                window.location.href = url.toString();
+            }
+        });
+
+        hourlyCalendarBtn.addEventListener('click', () => hourlyPicker.open());
+    }
+
+    
 })

@@ -141,15 +141,20 @@ class JsonPlugin extends Plugin
         $period = \Craft::$app->getRequest()->getParam('period', 'week');
         $offset = (int) \Craft::$app->getRequest()->getParam('offset', 0);
 
+        $hourlyDate = \Craft::$app->getRequest()->getParam('hourlyDate', date('Y-m-d'));
+
         return \Craft::$app->view->renderTemplate('json-plugin/settings', [
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
             'stats' => $this->getStats($period, $offset),
-            'hourlyStats' => $this->getHourlyStats(),
+            'hourlyStats' => $this->getHourlyStats($hourlyDate),
             'statsPeriod' => $period,
             'statsOffset' => $offset,
+            'selectedHourlyDate' => $hourlyDate, // This fixes your Twig error!
+            'selectedTimezone' => $this->getSettings()->timezone,
         ], \craft\web\View::TEMPLATE_MODE_CP);
+
     }
 
     public function getCpTemplateRoots(): array
@@ -192,8 +197,8 @@ class JsonPlugin extends Plugin
         WHERE dateAsked >= :since
         AND dateAsked < :until
         GROUP BY DATE(dateAsked)
-        ORDER BY date ASC
-    ")->bindValues([
+        ORDER BY date ASC")
+        ->bindValues([
                     ':since' => $since,
                     ':until' => (clone $startDate)->modify("+{$totalDays} days")->format('Y-m-d 00:00:00'),
                 ])->queryAll();
@@ -216,16 +221,39 @@ class JsonPlugin extends Plugin
         return $result;
     }
 
-    public function getHourlyStats(): array
+    public function getHourlyStats(string $date = null): array
     {
         $db = \Craft::$app->getDb();
+        $date = $date ?: date('Y-m-d');
 
-        return $db->createCommand("
-        SELECT HOUR(dateAsked) as hour, 
-               COUNT(*) as total
+        $pluginSettings = $this->getSettings();
+        $timezone = $pluginSettings->timezone ?? 'UTC';
+
+        $rows = $db->createCommand("
+        SELECT 
+            HOUR(CONVERT_TZ(dateAsked, '+00:00', :timezone)) AS hour, 
+            COUNT(*) AS total
         FROM {{%jsonplugin_stats}}
+        WHERE DATE(CONVERT_TZ(dateAsked, '+00:00', :timezone)) = :date
         GROUP BY hour
         ORDER BY hour ASC
-    ")->queryAll();
+    ")->bindValues([
+                    ':timezone' => $timezone,
+                    ':date' => $date
+                ])->queryAll();
+
+        $hourCounts = array_fill(0, 24, 0);
+        foreach ($rows as $row) {
+            $hourCounts[(int) $row['hour']] = (int) $row['total'];
+        }
+
+        $result = [];
+        for ($i = 0; $i < 24; $i++) {
+            $result[] = [
+                'hour' => $i,
+                'total' => $hourCounts[$i],
+            ];
+        }
+        return $result;
     }
 }
