@@ -1,5 +1,4 @@
 <?php
-
 namespace jelle\craftjsonplugin\controllers;
 
 use Craft;
@@ -17,55 +16,51 @@ class ChatController extends Controller
         $request = Craft::$app->getRequest();
         $settings = JsonPlugin::$plugin->getSettings();
 
-        // ── Rate limiting op IP ────────────────────────────────
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip = $request->getUserIP();
+        $cache = Craft::$app->getCache();
         $rateCacheKey = 'chat_ratelimit_' . md5($ip);
-        $count = \Craft::$app->getCache()->get($rateCacheKey) ?: 0;
-        $limit = (int) ($settings->rateLimit ?? 50);
+        
+        $count = (int)$cache->get($rateCacheKey);
+        $limit = (int)($settings->rateLimit ?? 50);
 
         if ($count >= $limit) {
             return $this->asJson([
-                'error' => true,
+                'error' => true, 
                 'antwoord' => 'Je hebt het maximaal aantal vragen bereikt. Probeer het later opnieuw.'
             ]);
         }
+        $cache->set($rateCacheKey, $count + 1, 3600);
 
-        \Craft::$app->getCache()->set($rateCacheKey, $count + 1, 3600);
+        $vraag = trim($request->getBodyParam('vraag', ''));
+        $maxVraagLength = (int)($settings->maxVraagLength ?? 500);
 
-        // ── Invoer validatie ───────────────────────────────────
-        $vraag = $request->getBodyParam('vraag') ?? '';
-        $maxVraagLength = (int) ($settings->maxVraagLength ?? 500);
-
-        if (empty(trim($vraag))) {
+        if (!$vraag) {
             return $this->asJson(['error' => true, 'antwoord' => 'Geen vraag ontvangen.']);
         }
 
         if (mb_strlen($vraag) > $maxVraagLength) {
             return $this->asJson([
-                'error' => true,
+                'error' => true, 
                 'antwoord' => "Je vraag is te lang. Het maximum is {$maxVraagLength} tekens."
             ]);
         }
 
         $sessionId = preg_replace('/[^a-z0-9]/', '', $request->getBodyParam('sessionId') ?? '');
-        if (strlen($sessionId) < 5) {
+        $isNewSession = strlen($sessionId) < 5;
+        if ($isNewSession) {
             $sessionId = bin2hex(random_bytes(8));
         }
 
-        $pageUrl = $request->getBodyParam('pageUrl') ?? '';
-        if ($pageUrl && !filter_var($pageUrl, FILTER_VALIDATE_URL)) {
-            $pageUrl = '';
-        }
-
-        // ── Vraag verwerken ────────────────────────────────────
-        $service = JsonPlugin::$plugin->get('jsonService');
-
         try {
-            $antwoord = $service->getAiResponse($vraag, $sessionId, $pageUrl);
-            return $this->asJson([
-                'antwoord' => $antwoord,
-                'sessionId' => $sessionId
-            ]);
+            $service = JsonPlugin::$plugin->get('jsonService');
+            $antwoord = $service->getAiResponse($vraag, $sessionId, $request->getBodyParam('pageUrl'));
+            
+            $responseData = ['antwoord' => $antwoord];
+            if ($isNewSession) {
+                $responseData['sessionId'] = $sessionId;
+            }
+            
+            return $this->asJson($responseData);
         } catch (\Exception $e) {
             Craft::error('Chat fout: ' . $e->getMessage(), 'json-plugin');
             return $this->asJson([

@@ -51,23 +51,6 @@
 						</svg>
 					</a>
 				</div>
-
-				<div class="stats-flex-group">
-					<strong>Tijdzone:</strong>
-					{{ forms.select({
-                        id: 'timezone',
-                        name: 'timezone',
-                        value: selectedTimezone,
-                        options: [
-                            { label: 'Europa: Brussel', value: 'Europe/Brussels' },
-                            { label: 'Europa: Amsterdam', value: 'Europe/Amsterdam' },
-                            { label: 'Europa: Berlijn', value: 'Europe/Berlin' },
-                            { label: 'VS: New York', value: 'America/New_York' },
-                            { label: 'VS: Los Angeles', value: 'America/Los_Angeles' },
-                            { label: 'Azië: Tokyo', value: 'Asia/Tokyo' }
-                        ]
-                    }) }}
-				</div>
 			</div>
 		</div>
 		<canvas id="hourly-stats-chart" class="chart-canvas chart-canvas-hourly"></canvas>

@@ -152,7 +152,6 @@ class JsonPlugin extends Plugin
             'statsPeriod' => $period,
             'statsOffset' => $offset,
             'selectedHourlyDate' => $hourlyDate, // This fixes your Twig error!
-            'selectedTimezone' => $this->getSettings()->timezone,
         ], \craft\web\View::TEMPLATE_MODE_CP);
 
     }
@@ -198,10 +197,10 @@ class JsonPlugin extends Plugin
         AND dateAsked < :until
         GROUP BY DATE(dateAsked)
         ORDER BY date ASC")
-        ->bindValues([
-                    ':since' => $since,
-                    ':until' => (clone $startDate)->modify("+{$totalDays} days")->format('Y-m-d 00:00:00'),
-                ])->queryAll();
+            ->bindValues([
+                ':since' => $since,
+                ':until' => (clone $startDate)->modify("+{$totalDays} days")->format('Y-m-d 00:00:00'),
+            ])->queryAll();
 
         $dataByDate = [];
         foreach ($rows as $row) {
@@ -223,37 +222,41 @@ class JsonPlugin extends Plugin
 
     public function getHourlyStats(string $date = null): array
     {
-        $db = \Craft::$app->getDb();
-        $date = $date ?: date('Y-m-d');
+        $db = Craft::$app->getDb();
+        $timezone = Craft::$app->getTimeZone();
 
-        $pluginSettings = $this->getSettings();
-        $timezone = $pluginSettings->timezone ?? 'UTC';
+        $date = $date ?: (new \DateTime('now', new \DateTimeZone($timezone)))
+            ->format('Y-m-d');
 
-        $rows = $db->createCommand("
-        SELECT 
+
+        $rows = $db->createCommand("SELECT 
             HOUR(CONVERT_TZ(dateAsked, '+00:00', :timezone)) AS hour, 
             COUNT(*) AS total
         FROM {{%jsonplugin_stats}}
         WHERE DATE(CONVERT_TZ(dateAsked, '+00:00', :timezone)) = :date
         GROUP BY hour
-        ORDER BY hour ASC
-    ")->bindValues([
-                    ':timezone' => $timezone,
-                    ':date' => $date
-                ])->queryAll();
+        ORDER BY hour ASC")
+            ->bindValues([
+                ':timezone' => $timezone,
+                ':date' => $date
+            ])
+            ->queryAll();
 
         $hourCounts = array_fill(0, 24, 0);
+
         foreach ($rows as $row) {
             $hourCounts[(int) $row['hour']] = (int) $row['total'];
         }
 
         $result = [];
+
         for ($i = 0; $i < 24; $i++) {
             $result[] = [
                 'hour' => $i,
                 'total' => $hourCounts[$i],
             ];
         }
+
         return $result;
     }
 }

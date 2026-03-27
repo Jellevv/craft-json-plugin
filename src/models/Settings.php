@@ -33,9 +33,6 @@ class Settings extends Model
 
     //public array $includedVolumes = [];
 
-    public string $timezone = 'Europe/Brussels';
-
-
     public function rules(): array
     {
         return [
@@ -127,7 +124,7 @@ class Settings extends Model
                 }
             ],
 
-            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage', 'timezone'], 'string'],
+            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
             [['maxTokens'], 'integer', 'min' => 50, 'max' => 2000],
             [['maxVraagLength'], 'integer', 'min' => 50, 'max' => 2000],

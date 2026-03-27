@@ -5,317 +5,162 @@ import flatpickr from 'flatpickr'
 import 'flatpickr/dist/flatpickr.min.css'
 import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect'
 import 'flatpickr/dist/plugins/monthSelect/style.css'
+
 document.addEventListener('DOMContentLoaded', function () {
-
-    const toggle = document.querySelector('#settings-useFallbackMessage-field .lightswitch')
-    const textarea = document.querySelector('#settings-fallbackMessage')
-
-    if (toggle && textarea) {
-        function updateState() {
-            const isOn = toggle.classList.contains('on')
-            textarea.disabled = !isOn
-            textarea.style.opacity = isOn ? '1' : '0.4'
-            textarea.required = isOn
-        }
-        updateState()
-        toggle.addEventListener('click', updateState)
+    const selectedTab = document.querySelector('.plugin-tabs')?.dataset.selectedTab || 'configuratie';
+    
+    const providerDropdown = document.getElementById('settings-aiProvider');
+    if (providerDropdown) {
+        const aiProviders = ['openai', 'groq', 'claude', 'gemini'];
+        const updateVisibility = () => {
+            const currentProvider = providerDropdown.value;
+            aiProviders.forEach(provider => {
+                const apiKeyWrapper = document.getElementById(`settings-${provider}ApiKey-field`);
+                const modelWrapper = document.getElementById(`settings-${provider}Model-field`);
+                if (apiKeyWrapper) apiKeyWrapper.style.display = (currentProvider === provider) ? '' : 'none';
+                if (modelWrapper) modelWrapper.style.display = (currentProvider === provider) ? '' : 'none';
+            });
+        };
+        updateVisibility();
+        providerDropdown.addEventListener('change', updateVisibility);
     }
 
-    const providerSelect = document.getElementById('settings-aiProvider')
-
-    if (providerSelect) {
-        const openaiFields = document.querySelector('#settings-openaiApiKey-field')
-        const openaiModelField = document.querySelector('#settings-openaiModel-field')
-        const groqFields = document.querySelector('#settings-groqApiKey-field')
-        const groqModelField = document.querySelector('#settings-groqModel-field')
-        const claudeFields = document.querySelector('#settings-claudeApiKey-field')
-        const claudeModelField = document.querySelector('#settings-claudeModel-field')
-        const geminiFields = document.querySelector('#settings-geminiApiKey-field')
-        const geminiModelField = document.querySelector('#settings-geminiModel-field')
-
-        function updateProviderFields() {
-            const provider = providerSelect.value
-            openaiFields.style.display = provider === 'openai' ? '' : 'none'
-            openaiModelField.style.display = provider === 'openai' ? '' : 'none'
-            groqFields.style.display = provider === 'groq' ? '' : 'none'
-            groqModelField.style.display = provider === 'groq' ? '' : 'none'
-            claudeFields.style.display = provider === 'claude' ? '' : 'none'
-            claudeModelField.style.display = provider === 'claude' ? '' : 'none'
-            geminiFields.style.display = provider === 'gemini' ? '' : 'none'
-            geminiModelField.style.display = provider === 'gemini' ? '' : 'none'
+    if (selectedTab === 'configuratie') {
+        const craftSubmitButton = document.querySelector('button.btn.submit');
+        if (craftSubmitButton) {
+            craftSubmitButton.textContent = 'Save & Sync';
+            const syncHiddenInput = document.querySelector('#settings-doSync');
+            if (syncHiddenInput) syncHiddenInput.value = '1';
         }
 
-        updateProviderFields()
-        providerSelect.addEventListener('change', updateProviderFields)
-    }
-
-    const saveBtn = document.querySelector('button.btn.submit')
-    const selectedTab = document.querySelector('.plugin-tabs')?.dataset.selectedTab || 'configuratie'
-
-    if (selectedTab === 'configuratie' && saveBtn) {
-        saveBtn.textContent = 'Save & Sync'
-        const doSync = document.querySelector('#settings-doSync')
-        if (doSync) doSync.value = '1'
-    }
-
-    const canvas = document.getElementById('settings-stats-chart')
-
-    if (canvas && window.statsData && selectedTab === 'statistieken') {
-
-        const title = document.getElementById('settings-stats-period-title')
-        if (title && window.statsData.length > 0) {
-            const firstDate = new Date(window.statsData[0].date)
-            const lastDate = new Date(window.statsData[window.statsData.length - 1].date)
-
-            if (window.statsPeriod === 'day') {
-                title.textContent = firstDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
-            } else if (window.statsPeriod === 'month') {
-                title.textContent = firstDate.toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })
-            } else {
-                title.textContent = firstDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) + ' – ' + lastDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
-            }
+        const fallbackLightswitch = document.querySelector('#settings-useFallbackMessage-field .lightswitch');
+        const fallbackTextarea = document.querySelector('#settings-fallbackMessage');
+        if (fallbackLightswitch && fallbackTextarea) {
+            const updateTextareaState = () => {
+                const isEnabled = fallbackLightswitch.classList.contains('on');
+                fallbackTextarea.disabled = !isEnabled;
+                fallbackTextarea.style.opacity = isEnabled ? '1' : '0.4';
+            };
+            updateTextareaState();
+            fallbackLightswitch.addEventListener('click', () => setTimeout(updateTextareaState, 50));
         }
+    }
 
-        const labels = window.statsData.map(row => {
-            const date = new Date(row.date)
-            return date.getDate()
-        })
+    if (selectedTab !== 'statistieken') return;
 
-        const questions = window.statsData.map(row => parseInt(row.total))
-        const fallbacks = window.statsData.map(row => parseInt(row.fallbacks))
+    const periodTitleElement = document.getElementById('settings-stats-period-title');
+    if (periodTitleElement && window.statsData?.length > 0) {
+        const firstEntryDate = new Date(window.statsData[0].date);
+        const lastEntryDate = new Date(window.statsData[window.statsData.length - 1].date);
+        
+        if (window.statsPeriod === 'day') {
+            periodTitleElement.textContent = firstEntryDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else if (window.statsPeriod === 'month') {
+            periodTitleElement.textContent = firstEntryDate.toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' });
+        } else {
+            const startStr = firstEntryDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' });
+            const endStr = lastEntryDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' });
+            periodTitleElement.textContent = `${startStr} – ${endStr}`;
+        }
+    }
 
-        const chartType = window.statsPeriod === 'day' ? 'bar' : 'line'
-
-        new Chart(canvas, {
-            type: chartType,
+    const statsChartCanvas = document.getElementById('settings-stats-chart');
+    if (statsChartCanvas && window.statsData) {
+        const chartStyle = window.statsPeriod === 'day' ? 'bar' : 'line';
+        new Chart(statsChartCanvas, {
+            type: chartStyle,
             data: {
-                labels: labels,
+                labels: window.statsData.map(row => new Date(row.date).getDate()),
                 datasets: [
                     {
                         label: 'Aantal vragen',
-                        data: questions,
-                        backgroundColor: chartType === 'bar' ? '#006bc2' : 'rgba(0, 107, 194, 0.1)',
+                        data: window.statsData.map(row => parseInt(row.total)),
+                        backgroundColor: chartStyle === 'bar' ? '#006bc2' : 'rgba(0, 107, 194, 0.1)',
                         borderColor: '#006bc2',
-                        borderWidth: 2,
-                        borderRadius: chartType === 'bar' ? 6 : 0,
-                        borderSkipped: false,
-                        maxBarThickness: 40,
-                        fill: chartType === 'line',
+                        fill: chartStyle === 'line',
                         tension: 0.3,
-                        pointRadius: chartType === 'line' ? 4 : 0,
-                        pointHoverRadius: 6,
+                        borderWidth: 2
                     },
                     {
                         label: 'Fallback antwoorden',
-                        data: fallbacks,
-                        backgroundColor: chartType === 'bar' ? 'rgba(229, 76, 60, 0.85)' : 'rgba(229, 76, 60, 0.1)',
+                        data: window.statsData.map(row => parseInt(row.fallbacks)),
+                        backgroundColor: chartStyle === 'bar' ? 'rgba(229, 76, 60, 0.85)' : 'rgba(229, 76, 60, 0.1)',
                         borderColor: 'rgba(229, 76, 60, 0.85)',
-                        borderWidth: 2,
-                        borderRadius: chartType === 'bar' ? 6 : 0,
-                        borderSkipped: false,
-                        maxBarThickness: 40,
-                        fill: chartType === 'line',
+                        fill: chartStyle === 'line',
                         tension: 0.3,
-                        pointRadius: chartType === 'line' ? 4 : 0,
-                        pointHoverRadius: 6,
+                        borderWidth: 2
                     }
                 ]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 20,
-                            font: {
-                                family: 'system-ui, -apple-system, sans-serif',
-                                size: 13,
-                            },
-                            color: '#596673',
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#fff',
-                        titleColor: '#1f2d3d',
-                        bodyColor: '#596673',
-                        borderColor: '#e3e5e8',
-                        borderWidth: 1,
-                        padding: 12,
-                        boxPadding: 6,
-                        usePointStyle: true,
-                        callbacks: {
-                            title: (items) => {
-                                const date = new Date(window.statsData[items[0].dataIndex].date)
-                                return date.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: true,
-                            color: '#f0f1f3',
-                        },
-                        border: {
-                            display: false,
-                        },
-                        ticks: {
-                            color: '#596673',
-                            font: {
-                                family: 'system-ui, -apple-system, sans-serif',
-                                size: 12,
-                            },
-                            maxRotation: 0,
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        border: {
-                            display: false,
-                            dash: [4, 4],
-                        },
-                        grid: {
-                            color: '#e3e5e8',
-                        },
-                        ticks: {
-                            stepSize: 1,
-                            color: '#596673',
-                            font: {
-                                family: 'system-ui, -apple-system, sans-serif',
-                                size: 12,
-                            },
-                            padding: 8,
-                        }
-                    }
-                }
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
             }
-        })
-
-        const calendarBtn = document.getElementById('settings-stats-calendar-btn')
-        const datepickerInput = document.getElementById('settings-stats-datepicker')
-
-        if (calendarBtn && datepickerInput) {
-            const pickerOptions = {
-                disableMobile: true,
-                onChange: (selectedDates) => {
-                    const selected = selectedDates[0]
-                    const today = new Date()
-                    today.setHours(0, 0, 0, 0)
-
-                    let offset = 0
-
-                    if (window.statsPeriod === 'day') {
-                        const diffTime = selected - today
-                        offset = Math.round(diffTime / (1000 * 60 * 60 * 24))
-                    } else if (window.statsPeriod === 'week') {
-                        const startOfThisWeek = new Date(today)
-                        const dayOfWeek = today.getDay() || 7
-                        startOfThisWeek.setDate(today.getDate() - (dayOfWeek - 1))
-
-                        const startOfSelectedWeek = new Date(selected)
-                        const selectedDayOfWeek = selected.getDay() || 7
-                        startOfSelectedWeek.setDate(selected.getDate() - (selectedDayOfWeek - 1))
-
-                        const diffTime = startOfSelectedWeek - startOfThisWeek
-                        offset = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7))
-                    } else if (window.statsPeriod === 'month') {
-                        const yearDiff = selected.getFullYear() - today.getFullYear()
-                        const monthDiff = selected.getMonth() - today.getMonth()
-                        offset = yearDiff * 12 + monthDiff
-                    }
-
-                    window.location.href = `?tab=statistieken&period=${window.statsPeriod}&offset=${offset}`
-                }
-            }
-
-            if (window.statsPeriod === 'month') {
-                pickerOptions.plugins = [new monthSelectPlugin({ shorthand: true, dateFormat: 'Y-m', altFormat: 'F Y' })]
-            } else if (window.statsPeriod === 'week') {
-                pickerOptions.weekNumbers = true
-                pickerOptions.locale = { firstDayOfWeek: 1 }
-            }
-
-            const picker = flatpickr(datepickerInput, pickerOptions)
-            calendarBtn.addEventListener('click', () => picker.open())
-        }
-
-        const hourlyCanvas = document.getElementById('settings-hourly-stats-chart');
-
-        if (hourlyCanvas && window.hourlyStatsData && selectedTab === 'statistieken') {
-
-            const hourlyLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-
-            const hourlyValues = new Array(24).fill(0);
-            window.hourlyStatsData.forEach(row => {
-                hourlyValues[parseInt(row.hour)] = parseInt(row.total);
-            });
-
-            new Chart(hourlyCanvas, {
-                type: 'bar',
-                data: {
-                    labels: hourlyLabels,
-                    datasets: [{
-                        label: 'Aantal vragen',
-                        data: hourlyValues,
-                        backgroundColor: '#006bc2',
-                        borderRadius: 4,
-                        maxBarThickness: 30,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#596673' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1,
-                                color: '#596673'
-                            },
-                            grid: { borderDash: [4, 4] }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: (items) => `Tijdstip: ${items[0].label}`
-                            }
-                        }
-                    }
-                }
-            });
-        }
+        });
     }
-    const hourlyCalendarBtn = document.getElementById('settings-hourly-stats-calendar-btn');
-    const hourlyDatepickerInput = document.getElementById('settings-hourly-stats-datepicker');
 
-    if (hourlyCalendarBtn && hourlyDatepickerInput) {
-        const hourlyPicker = flatpickr(hourlyDatepickerInput, {
+    const periodCalendarButton = document.getElementById('settings-stats-calendar-btn');
+    const periodCalendarInput = document.getElementById('settings-stats-datepicker');
+    if (periodCalendarButton && periodCalendarInput) {
+        const pickerOptions = {
             disableMobile: true,
-            dateFormat: "Y-m-d",
+            locale: 'nl',
             onChange: (selectedDates) => {
-                const selected = selectedDates[0];
-                const year = selected.getFullYear();
-                const month = String(selected.getMonth() + 1).padStart(2, '0');
-                const day = String(selected.getDate()).padStart(2, '0');
-                const formattedDate = `${year}-${month}-${day}`;
-                const url = new URL(window.location.href);
-                url.searchParams.set('hourlyDate', formattedDate);
-                window.location.href = url.toString();
+                const pickedDate = selectedDates[0];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                let dayOffset = 0;
+                if (window.statsPeriod === 'day') {
+                    dayOffset = Math.round((pickedDate - today) / 86400000);
+                } else if (window.statsPeriod === 'month') {
+                    dayOffset = (pickedDate.getFullYear() - today.getFullYear()) * 12 + (pickedDate.getMonth() - today.getMonth());
+                } else if (window.statsPeriod === 'week') {
+                    dayOffset = Math.round((pickedDate - today) / (86400000 * 7));
+                }
+                window.location.href = `?tab=statistieken&period=${window.statsPeriod}&offset=${dayOffset}`;
+            }
+        };
+        if (window.statsPeriod === 'month') {
+            pickerOptions.plugins = [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m", altFormat: "F Y" })];
+        }
+        const periodDatePicker = flatpickr(periodCalendarInput, pickerOptions);
+        periodCalendarButton.addEventListener('click', () => periodDatePicker.open());
+    }
+
+    const hourlyChartCanvas = document.getElementById('settings-hourly-stats-chart');
+    if (hourlyChartCanvas && window.hourlyStatsData) {
+        const hourlyDataBuckets = new Array(24).fill(0);
+        window.hourlyStatsData.forEach(row => { hourlyDataBuckets[parseInt(row.hour)] = parseInt(row.total); });
+        
+        new Chart(hourlyChartCanvas, {
+            type: 'bar',
+            data: {
+                labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                datasets: [{ label: 'Vragen per uur', data: hourlyDataBuckets, backgroundColor: '#006bc2', borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
             }
         });
 
-        hourlyCalendarBtn.addEventListener('click', () => hourlyPicker.open());
+        const hourlyCalendarButton = document.getElementById('settings-hourly-stats-calendar-btn');
+        const hourlyCalendarInput = document.getElementById('settings-hourly-stats-datepicker');
+        if (hourlyCalendarButton && hourlyCalendarInput) {
+            const hourlyDatePicker = flatpickr(hourlyCalendarInput, {
+                disableMobile: true,
+                dateFormat: "Y-m-d",
+                onChange: (selectedDates) => {
+                    const d = selectedDates[0];
+                    const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    window.location.href = `?tab=statistieken&period=${window.statsPeriod}&offset=${window.statsOffset}&hourlyDate=${dateString}`;
+                }
+            });
+            hourlyCalendarButton.addEventListener('click', () => hourlyDatePicker.open());
+        }
     }
-
-    
-})
+});
