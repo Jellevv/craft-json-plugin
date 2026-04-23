@@ -4,48 +4,44 @@ namespace jelle\craftjsonplugin\services;
 
 use Craft;
 use craft\elements\Entry;
-use craft\elements\Asset;
-use craft\helpers\DateTimeHelper;
-use yii\base\Component;
 use craft\elements\db\ElementQueryInterface;
+use jelle\craftjsonplugin\services\EmbeddingService;
+use jelle\craftjsonplugin\services\NormalizationService;
+use jelle\craftjsonplugin\services\StorageService;
 use jelle\craftjsonplugin\services\ai\AiInterface;
 use jelle\craftjsonplugin\services\ai\OpenAiProvider;
 use jelle\craftjsonplugin\services\ai\GroqProvider;
 use jelle\craftjsonplugin\services\ai\ClaudeProvider;
 use jelle\craftjsonplugin\services\ai\GeminiProvider;
 use craft\helpers\App;
-use OpenAI;
+use yii\base\Component;
 
 class JsonService extends Component
 {
+    private StorageService $storageService;
+    private NormalizationService $normalizationService;
+    private EmbeddingService $embeddingService;
+
+    public function init(): void
+    {
+        parent::init();
+        $this->storageService = new StorageService();
+        $this->normalizationService = new NormalizationService();
+        $this->embeddingService = new EmbeddingService();
+    }
+
+    // =========================
+    // Settings & storage
+    // =========================
+
     private function getSettings()
     {
         return \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
     }
 
-    private function getStoragePath(): string
-    {
-        $path = Craft::getAlias('@storage/json_plugin/json_data.json');
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-        return $path;
-    }
-
-    private function getJsonData(): array
-    {
-        $path = $this->getStoragePath();
-        if (!file_exists($path)) {
-            return ['entries' => []];
-        }
-        return json_decode(file_get_contents($path), true) ?: ['entries' => []];
-    }
-
-    private function saveJsonData(array $data): bool
-    {
-        return (bool) file_put_contents($this->getStoragePath(), json_encode($data, JSON_PRETTY_PRINT));
-    }
+    // =========================
+    // Push entries + embeddings
+    // =========================
 
     public function pushSingleEntry(int $elementId): bool
     {
@@ -54,10 +50,11 @@ class JsonService extends Component
             if (!$element instanceof Entry)
                 return false;
 
-            $data = $this->getJsonData();
+            $data = $this->storageService->getJsonData();
             $newEntry = $this->prepareEntryData($element);
 
             $found = false;
+
             foreach ($data['entries'] as &$entry) {
                 if ($entry['id'] == $newEntry['id']) {
                     $entry = $newEntry;
@@ -65,13 +62,20 @@ class JsonService extends Component
                     break;
                 }
             }
+            unset($entry);
+
             if (!$found) {
                 $data['entries'][] = $newEntry;
             }
 
-            return $this->saveJsonData($data);
-        } catch (\Exception $e) {
-            Craft::error("Fout bij opslaan entry {$elementId}: " . $e->getMessage(), 'json-plugin');
+            $this->storageService->saveJsonData($data);
+
+            $this->ensureEmbedding($newEntry);
+
+            return true;
+
+        } catch (\Throwable $e) {
+            Craft::error("Error pushSingleEntry {$elementId}: {$e->getMessage()}", 'json-plugin');
             return false;
         }
     }
@@ -94,18 +98,30 @@ class JsonService extends Component
                 if (!$field)
                     continue;
 
-                $objectValue = $element->getFieldValue($handle);
+                $value = $element->getFieldValue($handle);
 
                 $data[$handle] = match (true) {
-                    $field instanceof \craft\fields\Assets => $this->normalizeElements($objectValue, true),
+                    $field instanceof \craft\fields\Assets =>
+                    $this->normalizationService->normalizeElements($value, true),
+
                     $field instanceof \craft\fields\Entries,
-                    $field instanceof \craft\fields\Categories => $this->normalizeElements($objectValue, false),
-                    $field instanceof \craft\fields\Matrix => $this->normalizeContentBuilder($objectValue),
-                    $field instanceof \craft\fields\Lightswitch => (bool) $objectValue,
-                    str_contains(get_class($field), 'Money') => $this->normalizeMoney($objectValue),
-                    default => $this->normalizeValue($objectValue),
+                    $field instanceof \craft\fields\Categories =>
+                    $this->normalizationService->normalizeElements($value, false),
+
+                    $field instanceof \craft\fields\Matrix =>
+                    $this->normalizationService->normalizeContentBuilder($value),
+
+                    $field instanceof \craft\fields\Lightswitch =>
+                    (bool) $value,
+
+                    str_contains(get_class($field), 'Money') =>
+                    $this->normalizationService->normalizeMoney($value),
+
+                    default =>
+                    $this->normalizationService->normalizeValue($value),
                 };
-            } catch (\Exception $e) {
+
+            } catch (\Throwable) {
                 continue;
             }
         }
@@ -113,227 +129,410 @@ class JsonService extends Component
         return $data;
     }
 
-    private function normalizeElements($query, bool $isAsset): array
-    {
-        if (!$query instanceof ElementQueryInterface)
-            return [];
-
-        $elements = $query->all();
-        return array_map(function ($el) use ($isAsset) {
-            $base = [
-                'id' => $el->id,
-                'title' => $el->title,
-                'url' => ($el instanceof Asset) ? $el->getUrl() : $el->url,
-            ];
-
-            if (!$isAsset && $el instanceof Entry) {
-                foreach ($el->getFieldLayout()->getCustomFields() as $f) {
-                    $base[$f->handle] = $this->normalizeValue($el->getFieldValue($f->handle));
-                }
-            }
-            return $base;
-        }, $elements);
-    }
-
-    private function normalizeMoney($value): string
-    {
-        if (!$value)
-            return "0.00";
-
-        $amountValue = 0;
-
-        if (is_object($value)) {
-            if (method_exists($value, 'getAmount')) {
-                $amountValue = (float) $value->getAmount();
-            } elseif (isset($value->amount)) {
-                $amountValue = (float) $value->amount;
-            }
-        } else {
-            $amountValue = (float) $value;
-        }
-
-        if ($amountValue > 100 && floor($amountValue) == $amountValue) {
-            $amountValue = $amountValue / 100;
-        }
-
-        return number_format($amountValue, 2, '.', '');
-    }
-
-    private function normalizeContentBuilder($blocks): array
-    {
-        $output = [];
-        $entries = ($blocks instanceof ElementQueryInterface) ? $blocks->all() : ($blocks ?? []);
-
-        foreach ($entries as $block) {
-            $blockData = ['type' => $block->getType()->handle, 'fields' => []];
-            foreach ($block->getFieldLayout()->getCustomFields() as $subField) {
-                $val = $block->getFieldValue($subField->handle);
-                $blockData['fields'][$subField->handle] = $this->normalizeValue($val);
-            }
-            $output[] = $blockData;
-        }
-        return $output;
-    }
-
-    private function normalizeValue($value)
-    {
-        if ($value === null)
-            return null;
-
-        if ($value instanceof ElementQueryInterface) {
-            $isAsset = str_contains(get_class($value), 'Asset');
-            return $this->normalizeElements($value, $isAsset);
-        }
-
-        if ($value instanceof \DateTimeInterface)
-            return $value->format(DATE_ATOM);
-
-        if ($value instanceof \craft\fields\data\MultiOptionsFieldData) {
-            return array_map(fn($o) => (string) $o, $value->getOptions());
-        }
-
-        if (is_object($value)) {
-            if (str_contains(get_class($value), 'Money')) {
-                return $this->normalizeMoney($value);
-            }
-            if (str_contains(get_class($value), 'Address'))
-                return (string) $value;
-            return method_exists($value, '__toString') ? strip_tags((string) $value) : "[Object]";
-        }
-
-        if (is_array($value))
-            return array_map([$this, 'normalizeValue'], $value);
-
-        if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
-            $decoded = json_decode($value, true);
-            if (json_last_error() === JSON_ERROR_NONE)
-                return $decoded;
-        }
-
-        return is_numeric($value) ? $value : strip_tags((string) $value);
-    }
-
     public function syncAllContent(): array
     {
-        $settings = $this->getSettings();
-        $count = 0;
         try {
-            $this->saveJsonData(['entries' => []]);
+            $settings = $this->getSettings();
 
-            if (!empty($settings->includedSections)) {
-                $entries = Entry::find()->section($settings->includedSections)->all();
-                foreach ($entries as $e) {
-                    if ($this->pushSingleEntry($e->id))
-                        $count++;
+            $data = $this->storageService->getJsonData();
+            $existingEntries = $data['entries'] ?? [];
+
+            $existingMap = [];
+            foreach ($existingEntries as $entry) {
+                $existingMap[$entry['id']] = $entry;
+            }
+
+            $embeddings = $this->storageService->getStoredEmbeddings(); // 🔥 FIX
+
+            $newEntries = [];
+            $processedIds = [];
+
+            $created = 0;
+            $updated = 0;
+
+            $entries = Entry::find()
+                ->section($settings->includedSections)
+                ->all();
+
+            foreach ($entries as $e) {
+
+                $newEntry = $this->prepareEntryData($e);
+                $id = $newEntry['id'];
+
+                $processedIds[] = $id;
+
+                $old = $existingMap[$id] ?? null;
+
+                $compareOld = $old;
+                $compareNew = $newEntry;
+
+                if ($compareOld) {
+                    unset($compareOld['id']);
                 }
+                unset($compareNew['id']);
+
+                $isNew = !$old;
+                $isChanged = $old && $compareOld !== $compareNew;
+                $missingEmbedding = !isset($embeddings[$id]);
+
+                $needsEmbedding = $this->hasOpenAiKey() && ($isNew || $isChanged || $missingEmbedding);
+
+                if ($isNew) {
+                    $created++;
+                } elseif ($isChanged) {
+                    $updated++;
+                }
+
+                if ($needsEmbedding) {
+                    $this->embeddingService->generateAndSaveEmbeddings($newEntry);
+                }
+
+                $newEntries[] = $newEntry;
             }
 
-            $cache = \Craft::$app->getCache();
-            $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
-            foreach ($keys as $key) {
-                $cache->delete($key);
-            }
-            $cache->delete('chatbot_session_keys');
+            $deletedIds = array_diff(array_keys($existingMap), $processedIds);
 
-            return ['success' => true, 'count' => $count];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
+            if ($deletedIds) {
+                foreach ($deletedIds as $id) {
+                    unset($embeddings[$id]);
+                }
+                $this->storageService->saveStoredEmbeddings($embeddings);
+            }
+
+            // SAVE JSON
+            $this->storageService->saveJsonData([
+                'entries' => $newEntries
+            ]);
+
+            $this->clearChatbotCache();
+
+            Craft::info(
+                "Sync — created: {$created}, updated: {$updated}, deleted: " . count($deletedIds),
+                'json-plugin'
+            );
+
+            return [
+                'success' => true,
+                'created' => $created,
+                'updated' => $updated,
+                'deleted' => count($deletedIds),
+            ];
+
+        } catch (\Throwable $e) {
+            Craft::error("Sync error: {$e->getMessage()}", 'json-plugin');
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
     }
 
     public function deleteEntry(int $elementId): void
     {
-        $data = $this->getJsonData();
-        $data['entries'] = array_filter($data['entries'], fn($e) => $e['id'] != $elementId);
-        $this->saveJsonData($data);
+        $data = $this->storageService->getJsonData();
+        $data['entries'] = array_values(
+            array_filter($data['entries'], fn($e) => $e['id'] != $elementId)
+        );
+        $this->storageService->saveJsonData($data);
 
-        $cache = \Craft::$app->getCache();
-        $keys = $cache->offsetGet('chatbot_session_keys') ?: [];
+        // Also remove its embedding
+        $embeddings = $this->storageService->getStoredEmbeddings();
+        if (isset($embeddings[$elementId])) {
+            unset($embeddings[$elementId]);
+            $this->storageService->saveStoredEmbeddings($embeddings);
+        }
+
+        $this->clearChatbotCache();
+    }
+
+    private function ensureEmbedding(array $entry): void
+    {
+        if (!$this->hasOpenAiKey()) {
+            return;
+        }
+
+        $embeddings = $this->storageService->getStoredEmbeddings();
+        $id = $entry['id'];
+
+        if (!isset($embeddings[$id])) {
+            $this->embeddingService->generateAndSaveEmbeddings($entry);
+        }
+    }
+
+    private function hasOpenAiKey(): bool
+    {
+        $settings = $this->getSettings();
+        return !empty(App::parseEnv($settings->openaiApiKey));
+    }
+
+    private function clearChatbotCache(): void
+    {
+        $cache = Craft::$app->getCache();
+        $keys = $cache->get('chatbot_session_keys') ?: [];
+
         foreach ($keys as $key) {
             $cache->delete($key);
         }
+
         $cache->delete('chatbot_session_keys');
     }
 
-    public function getAiResponse(string $vraag, string $sessionId, string $pageUrl = ''): string
-    {
+    public function getAiResponse(
+        string $question,
+        string $sessionId,
+        string $pageUrl = '',
+        string $currentSectionHandle = ''
+    ): string {
         $settings = $this->getSettings();
-
         $aiProvider = $this->getAiProvider();
+
         if (is_string($aiProvider)) {
             return $aiProvider;
         }
 
-        $cacheKey = "chatbot_history_" . $sessionId;
-        $history = \Craft::$app->getCache()->get($cacheKey) ?: [];
+        $cache = Craft::$app->getCache();
+        $sessionKey = "chatbot_session_entries_{$sessionId}";
+        $sessionHistoryKey = "chatbot_session_history_{$sessionId}";
 
-        if (empty($history)) {
-            $keys = \Craft::$app->getCache()->get('chatbot_session_keys') ?: [];
-            $keys[] = $cacheKey;
-            \Craft::$app->getCache()->set('chatbot_session_keys', $keys, 86400);
+        $history = $cache->get($sessionHistoryKey) ?: [];
+        $history[] = ['role' => 'user', 'content' => $question];
 
-            $entries = array_map(function ($entry) {
-                unset($entry['_id']);
-                return $entry;
-            }, $this->getJsonData()['entries']);
-            $context = json_encode($entries, JSON_PRETTY_PRINT);
+        $cachedEntries = $cache->get($sessionKey) ?: [];
+        $cachedContextText = $this->buildContextForLlm($cachedEntries);
 
-            $fallbackInstructie = $settings->useFallbackMessage
-                ? "Onbekende vragen: antwoord exact \"" . $settings->fallbackMessage . "\""
-                : "";
+        $cachedEntries = $cache->get($sessionKey) ?: [];
+        $cachedContextText = $this->buildContextForLlm($cachedEntries);
 
-            $systemContent = $settings->systemPrompt . "\n\n" . $fallbackInstructie . "\n\nContext Data: " . $context;
+        $contextScore = 0.0;
 
-            $history[] = [
-                'role' => 'system',
-                'content' => $systemContent
-            ];
+        if (!empty($cachedEntries)) {
+            $contextScore = $this->estimateContextCoverage(
+                $question,
+                $cachedEntries,
+                $aiProvider
+            );
         }
 
-        $vraagMetContext = $pageUrl
-            ? "De gebruiker bevindt zich op deze pagina: {$pageUrl}\n\nVraag: {$vraag}"
-            : $vraag;
+        if ($contextScore > 0.80) {
 
-        $history[] = ['role' => 'user', 'content' => $vraagMetContext];
-        if (count($history) > 7) {
-            $history = array_merge([$history[0]], array_slice($history, -6));
+            $systemContent = $settings->systemPrompt
+                . "\n\nContext:\n" . $cachedContextText
+                . "\n\n" . ($pageUrl ? "User is on page: {$pageUrl}\n\n" : '');
+
+            $answer = $aiProvider->chat(
+                array_merge(
+                    [['role' => 'system', 'content' => $systemContent]],
+                    $history
+                ),
+                [
+                    'temperature' => (float) ($settings->temperature ?? 0.5),
+                    'max_tokens' => (int) ($settings->maxTokens ?? 300),
+                ]
+            );
+
+            $history[] = ['role' => 'assistant', 'content' => $answer];
+            $cache->set($sessionHistoryKey, $history, 86400);
+
+            return $answer;
         }
 
-        $answer = $aiProvider->chat($history, [
-            'temperature' => (float) ($settings->temperature ?? 0.5),
-            'max_tokens' => (int) ($settings->maxTokens ?? 300),
-        ]);
+        $allEntries = $this->storageService->getJsonData()['entries'] ?? [];
+        if ($currentSectionHandle) {
+            $allEntries = array_values(
+                array_filter($allEntries, fn($e) => ($e['sectie'] ?? '') === $currentSectionHandle)
+            );
+        }
 
-        $isFallback = $settings->useFallbackMessage && $answer === $settings->fallbackMessage;
+        $cachedEntries = $cache->get($sessionKey) ?: [];
+        $cachedIds = array_column($cachedEntries, 'id');
+        $remainingEntries = $allEntries;
 
-        Craft::error('DEBUG: getAiResponse insert reached', 'json-plugin');
+        $newEntries = [];
+        if (!empty(App::parseEnv($settings->openaiApiKey))) {
+            $newEntries = $this->embeddingService->getTopEntriesByEmbedding(
+                $question,
+                $remainingEntries,
+                (int) ($settings->embeddingTopK ?? 5),
+                (float) ($settings->embeddingThreshold ?? 0.15),
+                $cachedIds
+            );
+        } else {
 
-        $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
+            Craft::warning(
+                "No embeddings available — returning ALL remaining entries.",
+                'json-plugin'
+            );
 
-        Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
-            'sessionId' => $sessionId,
-            'isFallback' => $isFallback,
-            'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
-            'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
-            'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
-            'uid' => \craft\helpers\StringHelper::UUID(),
-        ])->execute();
+            $newEntries = $remainingEntries;
+        }
 
+        $merged = $this->mergeContextEntries(
+            $cachedEntries,
+            $newEntries,
+            $question
+        );
 
+        $seen = [];
+        $unique = [];
+        foreach ($merged as $entry) {
+            if (!isset($seen[$entry['id']])) {
+                $seen[$entry['id']] = true;
+                $unique[] = $entry;
+            }
+        }
 
+        $cache->set($sessionKey, $unique, 86400);
 
+        $contextText = $this->buildContextForLlm($unique);
+        $pageHint = $pageUrl ? "User is on page: {$pageUrl}\n\n" : '';
+        $systemContent = $settings->systemPrompt
+            . "\n\n" . ($settings->useFallbackMessage
+            ? "Only reply with \"{$settings->fallbackMessage}\" if the answer is clearly not present in the context.\n\n"
+            : '')
+            . "Context:\n" . $contextText . "\n\n" . $pageHint;
+
+        $answer = $aiProvider->chat(
+            array_merge([['role' => 'system', 'content' => $systemContent]], $history),
+            [
+                'temperature' => (float) ($settings->temperature ?? 0.5),
+                'max_tokens' => (int) ($settings->maxTokens ?? 300),
+            ]
+        );
+
+        $this->logStat($sessionId, $settings, $answer);
+        if (!empty($newEntries)) {
+            $this->logLlmContext($newEntries, $question);
+        }
 
         $history[] = ['role' => 'assistant', 'content' => $answer];
-        \Craft::$app->getCache()->set($cacheKey, $history, 86400);
-
+        $cache->set($sessionHistoryKey, $history, 86400);
         return $answer;
     }
+
+    private function mergeContextEntries(
+        array $cached,
+        array $new,
+        string $question
+    ): array {
+
+        $all = array_merge($cached, $new);
+
+        // dedupe
+        $seen = [];
+        $unique = [];
+
+        foreach ($all as $entry) {
+            if (!isset($entry['id']))
+                continue;
+
+            if (isset($seen[$entry['id']])) {
+                continue;
+            }
+
+            $seen[$entry['id']] = true;
+            $unique[] = $entry;
+        }
+
+        return $unique;
+    }
+
+    private function estimateContextCoverage(
+        string $question,
+        array $entries,
+        AiInterface $aiProvider
+    ): float {
+        if (empty($entries)) {
+            return 0.0;
+        }
+
+        $sample = array_slice($entries, 0, 200);
+        $contextText = $this->buildContextForLlm($sample);
+
+        $prompt = "You are a strict evaluator.\n"
+            . "Rate how well the context can answer the question.\n"
+            . "Return ONLY a number between 0 and 1.\n\n"
+            . "0 = not enough info\n"
+            . "1 = fully answerable\n\n"
+            . "Context:\n{$contextText}\n\n"
+            . "Question:\n{$question}\n";
+
+        $result = $aiProvider->chat(
+            [
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            [
+                'temperature' => 0,
+                'max_tokens' => 5
+            ]
+        );
+
+        // extract float safely
+        if (preg_match('/0(\.\d+)?|1(\.0+)?/', $result, $m)) {
+            return (float) $m[0];
+        }
+
+        return 0.0;
+    }
+
+    private function canAnswerFromContext(
+        string $question,
+        string $contextText,
+        AiInterface $aiProvider,
+        array $history,
+    ): bool {
+        if (empty($contextText)) {
+            return false;
+        }
+
+        $transcript = '';
+        foreach (array_slice($history, -6) as $msg) {
+            $role = $msg['role'] === 'user' ? 'User' : 'Assistant';
+            $transcript .= "{$role}: {$msg['content']}\n";
+        }
+
+        $prompt = "You decide whether the context below already contains enough information "
+            . "to answer the user's latest question.\n"
+            . "Use the conversation history to resolve pronouns like 'it', 'its', 'that', 'this, his, her'.\n\n"
+            . "Context:\n{$contextText}\n\n"
+            . "Conversation so far:\n{$transcript}\n"
+            . "Latest question: {$question}\n\n";
+
+        $result = $aiProvider->chat(
+            [['role' => 'user', 'content' => $prompt]],
+            ['temperature' => 0, 'max_tokens' => 3]
+        );
+
+        return stripos($result, 'yes') !== false;
+    }
+
+    private function logStat(string $sessionId, $settings, string $answer): void
+    {
+        $isFallback = ($settings->useFallbackMessage ?? false) && $answer === $settings->fallbackMessage;
+        $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
+
+        try {
+            Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
+                'sessionId' => $sessionId,
+                'isFallback' => $isFallback,
+                'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
+                'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
+                'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
+                'uid' => \craft\helpers\StringHelper::UUID(),
+            ])->execute();
+        } catch (\Throwable $e) {
+            Craft::error("Error logging stat: " . $e->getMessage(), 'json-plugin');
+        }
+    }
+
+    // =========================
+    // AI providers
+    // =========================
 
     private function getAiProvider(): AiInterface|string
     {
         $settings = $this->getSettings();
         $provider = $settings->aiProvider ?? 'openai';
-
         return match ($provider) {
             'groq' => $this->makeGroqProvider($settings),
             'claude' => $this->makeClaudeProvider($settings),
@@ -344,49 +543,104 @@ class JsonService extends Component
 
     private function makeOpenAiProvider($settings): AiInterface|string
     {
-        $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
-        if (!$apiKey) {
-            return "Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.";
-        }
-        return new OpenAiProvider(
-            $apiKey,
-            $settings->openaiModel ?: 'gpt-4o-mini'
-        );
+        $apiKey = App::parseEnv($settings->openaiApiKey);
+        if (!$apiKey)
+            return 'Fout: Geen OpenAI API Key geconfigureerd in de plugin instellingen.';
+        return new OpenAiProvider($apiKey, $settings->openaiModel ?: 'gpt-4o-mini');
     }
-
     private function makeGroqProvider($settings): AiInterface|string
     {
-        $apiKey = \craft\helpers\App::parseEnv($settings->groqApiKey);
-        if (!$apiKey) {
-            return "Fout: Geen Groq API Key geconfigureerd in de plugin instellingen.";
-        }
-        return new GroqProvider(
-            $apiKey,
-            $settings->groqModel ?: 'llama-3.3-70b-versatile'
-        );
+        $apiKey = App::parseEnv($settings->groqApiKey);
+        if (!$apiKey)
+            return 'Fout: Geen Groq API Key geconfigureerd in de plugin instellingen.';
+        return new GroqProvider($apiKey, $settings->groqModel ?: 'llama-3.3-70b-versatile');
     }
-
     private function makeClaudeProvider($settings): AiInterface|string
     {
-        $apiKey = \craft\helpers\App::parseEnv($settings->claudeApiKey);
-        if (!$apiKey) {
-            return "Fout: Geen Claude API Key geconfigureerd in de plugin instellingen.";
-        }
-        return new ClaudeProvider(
-            $apiKey,
-            $settings->claudeModel ?: 'claude-sonnet-4-6'
-        );
+        $apiKey = App::parseEnv($settings->claudeApiKey);
+        if (!$apiKey)
+            return 'Fout: Geen Claude API Key geconfigureerd in de plugin instellingen.';
+        return new ClaudeProvider($apiKey, $settings->claudeModel ?: 'claude-sonnet-4-6');
     }
-
     private function makeGeminiProvider($settings): AiInterface|string
     {
-        $apiKey = \craft\helpers\App::parseEnv($settings->geminiApiKey);
-        if (!$apiKey) {
-            return "Fout: Geen Gemini API Key geconfigureerd in de plugin instellingen.";
+        $apiKey = App::parseEnv($settings->geminiApiKey);
+        if (!$apiKey)
+            return 'Fout: Geen Gemini API Key geconfigureerd in de plugin instellingen.';
+        return new GeminiProvider($apiKey, $settings->geminiModel ?: 'gemini-2.0-flash');
+    }
+
+    // =========================
+    // Context builder
+    // =========================
+
+    private function buildContextForLlm(array $entries): string
+    {
+        $lines = [];
+        foreach ($entries as $entry) {
+            $entryLines = [];
+            if (!empty($entry['title'])) {
+                $entryLines[] = "name: " . $entry['title'];
+                $entryLines[] = "title: " . $entry['title'];
+            }
+            if (!empty($entry['sectie'])) {
+                $entryLines[] = "section: " . $entry['sectie'];
+
+                if ($entry['sectie'] === 'team') {
+                    $entryLines[] = "entity_type: person";
+                }
+            }
+            foreach ($entry as $key => $value) {
+                if (in_array($key, ['id', 'title', 'url', 'sectie']))
+                    continue;
+                if (is_array($value)) {
+                    if (isset($value[0]['type']))
+                        continue;
+                    $value = json_encode($value);
+                }
+                if ($value !== '' && $value !== null) {
+                    if ($key === 'role') {
+                        $entryLines[] = "job_title: " . $value;
+                    } else {
+                        $entryLines[] = $key . ": " . $value;
+                    }
+                }
+            }
+            if (!empty($entryLines)) {
+                $lines[] = implode("\n", $entryLines);
+            }
         }
-        return new GeminiProvider(
-            $apiKey,
-            $settings->geminiModel ?: 'gemini-2.0-flash'
-        );
+        return implode("\n\n", $lines);
+    }
+
+
+
+    // =========================
+    // Debug logging
+    // =========================
+
+    private function logLlmContext(array $entries, string $question): void
+    {
+        Craft::info("=== LLM DEBUG LOG ===", 'json-plugin');
+        Craft::info("Question: {$question}", 'json-plugin');
+        Craft::info("Entries count: " . count($entries), 'json-plugin');
+
+        foreach ($entries as $entry) {
+            $id = $entry['id'] ?? 'unknown';
+            $section = $entry['sectie'] ?? 'unknown';
+            $fields = array_diff(array_keys($entry), ['id', 'sectie', 'title', 'url']);
+
+            Craft::info("Entry ID {$id} | Section: {$section} | Fields: " . implode(', ', $fields), 'json-plugin');
+
+            foreach ($fields as $f) {
+                $valuePreview = is_array($entry[$f]) ? json_encode($entry[$f]) : (string) $entry[$f];
+                if (strlen($valuePreview) > 100) {
+                    $valuePreview = substr($valuePreview, 0, 100) . '...';
+                }
+                Craft::info("    {$f}: {$valuePreview}", 'json-plugin');
+            }
+        }
+
+        Craft::info("=== END LLM DEBUG LOG ===", 'json-plugin');
     }
 }
