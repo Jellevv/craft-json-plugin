@@ -30,6 +30,9 @@ class JsonPlugin extends Plugin
         return [
             'components' => [
                 'jsonService' => \jelle\craftjsonplugin\services\JsonService::class,
+                'db' => \jelle\craftjsonplugin\services\DbStorageService::class,
+                'embeddings' => \jelle\craftjsonplugin\services\EmbeddingService::class,
+                'chat' => \jelle\craftjsonplugin\services\ChatService::class,
             ],
         ];
     }

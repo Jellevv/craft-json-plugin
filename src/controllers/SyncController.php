@@ -17,7 +17,7 @@ class SyncController extends Controller
         $result = $service->syncAllContent();
 
         if ($result['success']) {
-            Craft::$app->getSession()->setNotice("Synchronisatie voltooid: {$result['count']} items gepusht naar de chatbot.");
+            Craft::$app->getSession()->setNotice("Synchronisatie voltooid: {$result['synced']} items gepusht naar de chatbot.");
         } else {
             Craft::$app->getSession()->setError("Synchronisatie mislukt: " . ($result['message'] ?? 'Onbekende fout'));
         }

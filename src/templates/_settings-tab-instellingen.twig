@@ -25,17 +25,17 @@
 
 		{{ forms.autosuggestField({ label: 'Gemini API Key', instructions: 'Voer je Google API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $GEMINI_API_KEY', id: 'geminiApiKey', name: 'geminiApiKey', value: settings.geminiApiKey, placeholder: 'AIza...', suggestEnvVars: true, required: true }) }}
 
-		{{ forms.selectField({ label: 'Gemini Model', instructions: 'Welk Gemini model moet de chatbot gebruiken?', id: 'geminiModel', name: 'geminiModel', value: settings.geminiModel, options: [{ label: 'Gemini 2.0 Flash (aanbevolen)', value: 'gemini-2.0-flash' }, { label: 'Gemini 2.0 Flash Lite (snel & goedkoop)', value: 'gemini-2.0-flash-lite' }, { label: 'Gemini 1.5 Pro (krachtig)', value: 'gemini-1.5-pro' }] }) }}
+		{{ forms.selectField({ label: 'Gemini Model', instructions: 'Welk Gemini model moet de chatbot gebruiken?', id: 'geminiModel', name: 'geminiModel', value: settings.geminiModel, options: [{ label: 'Gemini 2.0 Flash (aanbevolen)', value: 'gemini-2.0-flash' }, { label: 'Gemini 2.0 Flash Lite (snel & goedkoop)', value: 'gemini-2.0-flash-lite' }, { label: 'Gemini 1.5 Pro (krachtig)', value: 'gemini-1.5-pro' }, { label: '2.5', value: 'gemini-2.5-flash-preview-05-20'}] }) }}
 
-		{{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2)', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
+		{{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2). Het is aangeraden om onder 1 te blijven.', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
 
-		{{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
+		{{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (min. 50, max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
 
-		{{ forms.textField({ label: 'Max vraaglengte (tekens)', instructions: 'Maximaal aantal tekens dat een gebruiker in één vraag mag typen. (max. 2000)', id: 'maxVraagLength', name: 'maxVraagLength', value: settings.maxVraagLength, placeholder: '500' }) }}
+		{{ forms.textField({ label: 'Max vraaglengte (tekens)', instructions: 'Maximaal aantal tekens dat een gebruiker in één vraag mag typen. (min. 10, max. 2000)', id: 'maxVraagLength', name: 'maxVraagLength', value: settings.maxVraagLength, placeholder: '500' }) }}
 
 		{{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
 
-		{{ forms.textField({ label: 'Max embedding entries', instructions: 'Hoeveel relevante entries mogen er maximaal worden opgehaald?', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '3' }) }}
+		{{ forms.textField({ label: 'Max embedding entries (enkel in te vullen bij OpenAI als provider)', instructions: 'Hoeveel relevante entries mogen er per vraag maximaal worden opgehaald? (min. 1, max. 100)', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '3' }) }}
 
 		{{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent', required: true }) }}
 

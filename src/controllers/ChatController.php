@@ -19,20 +19,20 @@ class ChatController extends Controller
         $ip = $request->getUserIP();
         $cache = Craft::$app->getCache();
         $rateCacheKey = 'chat_ratelimit_' . md5($ip);
-        
-        $count = (int)$cache->get($rateCacheKey);
-        $limit = (int)($settings->rateLimit ?? 50);
+
+        $count = (int) $cache->get($rateCacheKey);
+        $limit = (int) ($settings->rateLimit ?? 50);
 
         if ($count >= $limit) {
             return $this->asJson([
-                'error' => true, 
+                'error' => true,
                 'antwoord' => 'Je hebt het maximaal aantal vragen bereikt. Probeer het later opnieuw.'
             ]);
         }
         $cache->set($rateCacheKey, $count + 1, 3600);
 
         $vraag = trim($request->getBodyParam('vraag', ''));
-        $maxVraagLength = (int)($settings->maxVraagLength ?? 500);
+        $maxVraagLength = (int) ($settings->maxVraagLength ?? 500);
 
         if (!$vraag) {
             return $this->asJson(['error' => true, 'antwoord' => 'Geen vraag ontvangen.']);
@@ -40,7 +40,7 @@ class ChatController extends Controller
 
         if (mb_strlen($vraag) > $maxVraagLength) {
             return $this->asJson([
-                'error' => true, 
+                'error' => true,
                 'antwoord' => "Je vraag is te lang. Het maximum is {$maxVraagLength} tekens."
             ]);
         }
@@ -52,14 +52,14 @@ class ChatController extends Controller
         }
 
         try {
-            $service = JsonPlugin::$plugin->get('jsonService');
+            $service = JsonPlugin::$plugin->get('chat');
             $antwoord = $service->getAiResponse($vraag, $sessionId, $request->getBodyParam('pageUrl'));
-            
+
             $responseData = ['antwoord' => $antwoord];
             if ($isNewSession) {
                 $responseData['sessionId'] = $sessionId;
             }
-            
+
             return $this->asJson($responseData);
         } catch (\Exception $e) {
             Craft::error('Chat fout: ' . $e->getMessage(), 'json-plugin');

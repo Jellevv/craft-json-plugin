@@ -15,7 +15,6 @@ class Settings extends Model
     public string $claudeModel = 'claude-sonnet-4-6';
     public string $geminiApiKey = '';
     public string $geminiModel = 'gemini-2.0-flash';
-
     public mixed $temperature = null;
     public mixed $maxTokens = null;
     public mixed $maxVraagLength = null;
@@ -135,9 +134,9 @@ class Settings extends Model
             [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
             [['maxTokens'], 'integer', 'min' => 50, 'max' => 2000],
-            [['maxVraagLength'], 'integer', 'min' => 50, 'max' => 2000],
+            [['maxVraagLength'], 'integer', 'min' => 10, 'max' => 2000],
             [['rateLimit'], 'integer', 'min' => 1, 'max' => 500],
-            [['embeddingTopK'], 'integer', 'min' => 1, 'max' => 50],
+            [['embeddingTopK'], 'integer', 'min' => 1, 'max' => 100],
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
             [['useFallbackMessage'], 'boolean'],

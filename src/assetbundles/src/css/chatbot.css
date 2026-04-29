@@ -1,7 +1,9 @@
+/* ── Desktop: gebruikt --chat-width en --chat-height uit JS ── */
 .chat-wrapper {
     position: fixed;
     bottom: 20px;
     right: 20px;
+    width: var(--chat-width, 300px);
     display: flex;
     flex-direction: column;
     border-radius: 18px;
@@ -13,9 +15,62 @@
     font-family: Arial, sans-serif;
     min-width: 280px;
 }
+
 .chat-wrapper.collapsed {
-    height: 40px;
+    height: 40px !important;
 }
+
+/* Open: gebruik de desktop hoogte-variabele */
+.chat-wrapper:not(.collapsed) {
+    height: var(--chat-height, 400px);
+}
+
+/* ── Tablet: 281px – 1024px ───────────────────────────────── */
+@media (max-width: 1024px) {
+    .chat-wrapper {
+        width: min(calc(var(--chat-width, 300px) * 0.85), calc(100vw - 32px));
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .chat-wrapper:not(.collapsed) {
+        height: min(calc(var(--chat-height, 400px) * 0.85), calc(100dvh - 80px));
+    }
+}
+
+/* ── Mobiel: 0px – 640px ──────────────────────────────────── */
+@media (max-width: 640px) {
+    .chat-wrapper {
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        min-width: unset;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .chat-wrapper:not(.collapsed) {
+        height: 85dvh;
+    }
+
+    .chat-wrapper.collapsed {
+        height: 48px !important;
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* ── Klein telefoon: 0px – 280px ─────────────────────────── */
+@media (max-width: 280px) {
+    .chat-wrapper:not(.collapsed) {
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .chat-wrapper.collapsed {
+        border-radius: 0;
+    }
+}
+
+/* ── Header ───────────────────────────────────────────────── */
 .chat-header {
     height: 40px;
     flex-shrink: 0;
@@ -26,6 +81,14 @@
     align-items: center;
     cursor: pointer;
 }
+
+@media (max-width: 640px) {
+    .chat-header {
+        height: 48px;
+    }
+}
+
+/* ── Berichtencontainer ───────────────────────────────────── */
 .chat-container {
     flex: 1;
     overflow-y: auto;
@@ -37,6 +100,8 @@
     background-color: #f5f5f5;
     width: -webkit-fill-available;
 }
+
+/* ── Berichten ────────────────────────────────────────────── */
 .chat-entry {
     max-width: 85%;
     padding: 10px 14px;
@@ -45,10 +110,12 @@
     line-height: 1.4;
     word-wrap: break-word;
 }
+
 .chat-entry.user {
     align-self: flex-end;
     border-bottom-right-radius: 4px;
 }
+
 .chat-entry.assistant {
     align-self: flex-start;
     background-color: white;
@@ -56,6 +123,8 @@
     border: 1px solid #ddd;
     border-bottom-left-radius: 4px;
 }
+
+/* ── Invoerveld ───────────────────────────────────────────── */
 .input-container {
     display: flex;
     padding: 10px;
@@ -64,6 +133,13 @@
     gap: 4px;
     flex-shrink: 0;
 }
+
+@media (max-width: 640px) {
+    .input-container {
+        padding: 10px 10px 18px; /* extra ruimte voor home-indicator */
+    }
+}
+
 .vraag {
     flex: 1;
     min-width: 0;
@@ -72,6 +148,7 @@
     border: 1px solid #ccc;
     outline: none;
 }
+
 .verstuur {
     padding: 10px 18px;
     border-radius: 20px;
@@ -82,6 +159,8 @@
     white-space: nowrap;
     flex-shrink: 0;
 }
+
+/* ── Reset knop ───────────────────────────────────────────── */
 .chat-reset {
     cursor: pointer;
     font-size: 16px;
@@ -89,6 +168,8 @@
     border-radius: 4px;
     display: none;
 }
+
+/* ── Bevestigingsdialoog ──────────────────────────────────── */
 .chat-confirm {
     position: absolute;
     top: 5%;
@@ -105,11 +186,13 @@
     flex-direction: column;
     gap: 8px;
 }
+
 .chat-confirm-buttons {
     display: flex;
     gap: 6px;
     justify-content: flex-end;
 }
+
 .chat-confirm-buttons button {
     padding: 4px 12px;
     border-radius: 6px;
@@ -117,9 +200,11 @@
     cursor: pointer;
     font-size: 12px;
 }
+
 .chat-confirm-confirmed {
     color: white;
 }
+
 .chat-confirm-cancelled {
     background-color: #e3e5e8;
     color: #333;

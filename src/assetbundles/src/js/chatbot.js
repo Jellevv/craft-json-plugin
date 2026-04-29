@@ -16,14 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Data attributen ────────────────────────────────────────
     const primaryColor = chatWrapper.dataset.color
-    const chatWidth = chatWrapper.dataset.width
-    const chatHeight = chatWrapper.dataset.height
-    const chatbotName = chatWrapper.dataset.chatbotName
-    const welcomeMessage = chatWrapper.dataset.welcomeMessage
-    const maxVraagLength = parseInt(chatWrapper.dataset.maxVraagLength)
+    const chatWidth    = chatWrapper.dataset.width
+    const chatHeight   = chatWrapper.dataset.height
+    const chatbotName  = chatWrapper.dataset.chatbotName
+    const welcomeMessage  = chatWrapper.dataset.welcomeMessage
+    const maxVraagLength  = parseInt(chatWrapper.dataset.maxVraagLength)
     const csrfToken = chatWrapper.dataset.csrf
 
-    chatWrapper.style.width = chatWidth + 'px'
+    // ── Stel desktop afmetingen in als CSS-variabelen ──────────
+    // Media queries in de CSS regelen tablet- en mobielewaarden automatisch.
+    chatWrapper.style.setProperty('--chat-width',  chatWidth  + 'px')
+    chatWrapper.style.setProperty('--chat-height', chatHeight + 'px')
 
     // ── Kleur hulpfuncties ─────────────────────────────────────
     const lightenColor = (hex, amount = 0.8) => {
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const lightColor = lightenColor(primaryColor)
-    const darkColor = darkenColor(primaryColor)
+    const darkColor  = darkenColor(primaryColor)
 
     // ── Sessie ─────────────────────────────────────────────────
     let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15)
@@ -68,10 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Toggle open/dicht ──────────────────────────────────────
     chatToggle.addEventListener('click', () => {
         const isCollapsed = chatWrapper.classList.toggle('collapsed')
-        chatIcon.textContent = isCollapsed ? '+' : '-'
-        chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : chatbotName
-        chatWrapper.style.height = isCollapsed ? '' : chatHeight + 'px'
-        resetButton.style.display = isCollapsed ? 'none' : 'inline'
+        chatIcon.textContent        = isCollapsed ? '+' : '-'
+        chatHeaderText.textContent  = isCollapsed ? 'Heeft u een vraag?' : chatbotName
+        resetButton.style.display   = isCollapsed ? 'none' : 'inline'
     })
 
     // ── Reset gesprek ──────────────────────────────────────────
