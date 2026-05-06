@@ -16,16 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Data attributen ────────────────────────────────────────
     const primaryColor = chatWrapper.dataset.color
-    const chatWidth    = chatWrapper.dataset.width
-    const chatHeight   = chatWrapper.dataset.height
-    const chatbotName  = chatWrapper.dataset.chatbotName
-    const welcomeMessage  = chatWrapper.dataset.welcomeMessage
-    const maxVraagLength  = parseInt(chatWrapper.dataset.maxVraagLength)
+    const chatWidth = chatWrapper.dataset.width
+    const chatHeight = chatWrapper.dataset.height
+    const chatbotName = chatWrapper.dataset.chatbotName
+    const welcomeMessage = chatWrapper.dataset.welcomeMessage
+    const maxVraagLength = parseInt(chatWrapper.dataset.maxVraagLength)
     const csrfToken = chatWrapper.dataset.csrf
 
     // ── Stel desktop afmetingen in als CSS-variabelen ──────────
     // Media queries in de CSS regelen tablet- en mobielewaarden automatisch.
-    chatWrapper.style.setProperty('--chat-width',  chatWidth  + 'px')
+    chatWrapper.style.setProperty('--chat-width', chatWidth + 'px')
     chatWrapper.style.setProperty('--chat-height', chatHeight + 'px')
 
     // ── Kleur hulpfuncties ─────────────────────────────────────
@@ -44,10 +44,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const lightColor = lightenColor(primaryColor)
-    const darkColor  = darkenColor(primaryColor)
+    const darkColor = darkenColor(primaryColor)
 
-    // ── Sessie ─────────────────────────────────────────────────
-    let sessionId = localStorage.getItem('chatSessionId') || Math.random().toString(36).substring(2, 15)
+    const MAX_HISTORY = 20
+
+    const sanitize = (html) => {
+        const allowed = { a: ['href', 'target'], strong: [], br: [] }
+        const div = document.createElement('div')
+        div.innerHTML = html
+        div.querySelectorAll('*').forEach(el => {
+            const tag = el.tagName.toLowerCase()
+            if (!allowed[tag]) {
+                el.replaceWith(document.createTextNode(el.textContent))
+                return
+            }
+            Array.from(el.attributes).forEach(attr => {
+                if (!allowed[tag].includes(attr.name)) el.removeAttribute(attr.name)
+            })
+            // Block javascript: URLs on links
+            if (el.href && el.href.startsWith('javascript:')) el.removeAttribute('href')
+        })
+        return div.innerHTML
+    }
+
+    let sessionId = localStorage.getItem('chatSessionId') || crypto.randomUUID()
     localStorage.setItem('chatSessionId', sessionId)
 
     // ── Geschiedenis herladen ──────────────────────────────────
@@ -60,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             div.style.color = darkColor
             div.textContent = msg.content
         } else {
-            div.innerHTML = msg.content
+            // Fix #1: sanitize opgeslagen HTML bij herladen (beschermt tegen opgeslagen XSS)
+            div.innerHTML = sanitize(msg.content)
         }
         chatContainer.appendChild(div)
     })
@@ -71,9 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Toggle open/dicht ──────────────────────────────────────
     chatToggle.addEventListener('click', () => {
         const isCollapsed = chatWrapper.classList.toggle('collapsed')
-        chatIcon.textContent        = isCollapsed ? '+' : '-'
-        chatHeaderText.textContent  = isCollapsed ? 'Heeft u een vraag?' : chatbotName
-        resetButton.style.display   = isCollapsed ? 'none' : 'inline'
+        chatIcon.textContent = isCollapsed ? '+' : '-'
+        chatHeaderText.textContent = isCollapsed ? 'Heeft u een vraag?' : chatbotName
+        resetButton.style.display = isCollapsed ? 'none' : 'inline'
     })
 
     // ── Reset gesprek ──────────────────────────────────────────
@@ -97,7 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation()
             localStorage.removeItem('chatHistory_' + sessionId)
             localStorage.removeItem('chatSessionId')
-            sessionId = Math.random().toString(36).substring(2, 15)
+            // Fix #2: gebruik crypto.randomUUID() ook bij reset
+            sessionId = crypto.randomUUID()
             localStorage.setItem('chatSessionId', sessionId)
             chatContainer.innerHTML = '<div class="chat-entry assistant">' + welcomeMessage + '</div>'
             confirmDiv.remove()
@@ -110,7 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!vraagTekst) return
 
         if (maxVraagLength && vraagTekst.length > maxVraagLength) {
-            alert('Je vraag is te lang. Maximum is ' + maxVraagLength + ' tekens.')
+            const errorDiv = document.createElement('div')
+            errorDiv.className = 'chat-entry assistant'
+            errorDiv.textContent = 'Je vraag is te lang. Maximum is ' + maxVraagLength + ' tekens.'
+            chatContainer.appendChild(errorDiv)
+            chatContainer.scrollTop = chatContainer.scrollHeight
             return
         }
 
@@ -123,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const history = JSON.parse(localStorage.getItem('chatHistory_' + sessionId) || '[]')
         history.push({ role: 'user', content: vraagTekst })
+
+        if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY)
         localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
 
         const assistantDiv = document.createElement('div')
@@ -157,9 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\n/g, '<br>')
 
-            assistantDiv.innerHTML = parsedAntwoord
+            const safeAntwoord = sanitize(parsedAntwoord)
+            assistantDiv.innerHTML = safeAntwoord
 
-            history.push({ role: 'assistant', content: parsedAntwoord })
+            history.push({ role: 'assistant', content: safeAntwoord })
+
+            if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY)
             localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
 
         } catch (err) {

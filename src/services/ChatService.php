@@ -41,7 +41,13 @@ class ChatService extends Component
 
         $provider = $settings->aiProvider ?? 'openai';
 
-        $entriesKey = "chat_entries_{$sessionId}_{$provider}";
+        $hasEmbeddings = !empty(App::parseEnv($settings->openaiApiKey ?? ''));
+
+        if ($hasEmbeddings) {
+            $entriesKey = "chat_entries_{$sessionId}_{$provider}";
+        } else {
+            $entriesKey = "chat_entries_all_{$provider}";
+        }
         $historyKey = "chat_history_{$sessionId}_{$provider}";
         $providerKey = "chat_provider_{$sessionId}";
 
@@ -64,8 +70,6 @@ class ChatService extends Component
 
         $history = $cache->get($historyKey) ?: [];
         $history[] = ['role' => 'user', 'content' => $question];
-
-        $hasEmbeddings = !empty(App::parseEnv($settings->openaiApiKey ?? ''));
 
         if ($hasEmbeddings) {
             $db = \jelle\craftjsonplugin\JsonPlugin::$plugin->get('db');
@@ -159,15 +163,21 @@ class ChatService extends Component
         $context = '';
 
         foreach ($contextEntries as $e) {
-            $context .= ($e['entry']['title'] ?? '') . "\n";
+            $context .= 'Title: ' . ($e['entry']['title'] ?? '') . "\n";
+            if (!empty($e['entry']['url'])) {
+                $context .= 'URL: ' . $e['entry']['url'] . "\n";
+            }
             $context .= json_encode($e['fields'] ?? []) . "\n\n";
         }
 
-        $system = ($settings->systemPrompt ?? 'You are a helpful assistant.')
+        $system = ($settings->systemPrompt ?? 'Je bent een vriendelijke en behulpzame assistent.')
             . "\n\nContext:\n" . $context;
 
+        $cache->set($historyKey, $history, 86400);
+
         if ($pageUrl) {
-            $system .= "\nUser page: {$pageUrl}";
+            $safePageUrl = str_replace(["\n", "\r"], ' ', $pageUrl);
+            $system .= "\nUser page: {$safePageUrl}";
         }
 
         if ($settings->useFallbackMessage ?? false) {
@@ -177,7 +187,7 @@ class ChatService extends Component
 
         $maxHistory = (int) ($settings->maxHistoryTurns ?? 6); // 6 = 3 user+assistant pairs
 
-        $answer = $aiProvider->chat(
+        $result = $aiProvider->chat(
             array_merge(
                 [['role' => 'system', 'content' => $system]],
                 array_slice($history, -$maxHistory)
@@ -188,11 +198,26 @@ class ChatService extends Component
             ]
         );
 
+        if (!$result->success) {
+            Craft::error('AI provider fout: ' . $result->error, 'json-plugin');
+            return 'Excuses, er ging iets mis bij het ophalen van een antwoord.';
+        }
+
+        $answer = $result->content;
+        if (($result->finishReason ?? '') === 'length') {
+            $answer = preg_replace('/\[[^\]]*$/', '', $answer);
+            $answer = preg_replace('/\([^\)]*$/', '', $answer);
+            $answer = rtrim($answer, '[( ') . ' *(antwoord afgekapt — stel een specifiekere vraag)*';
+        }
+
         if (($settings->useFallbackMessage ?? false) && str_contains($answer, '[FALLBACK]')) {
             $answer = $settings->fallbackMessage;
         }
 
         $history[] = ['role' => 'assistant', 'content' => $answer];
+        if (count($history) > $maxHistory) {
+            $history = array_slice($history, -$maxHistory);
+        }
         $cache->set($historyKey, $history, 86400);
 
         $this->logStat($sessionId, $settings, $answer);
@@ -254,17 +279,14 @@ class ChatService extends Component
         );
     }
 
-    private function logStat(string $sessionId, $settings, string $answer): void
+    private function logStat(string $sessionId, $settings, string $answer, bool $isError = false): void
     {
-        $isFallback = ($settings->useFallbackMessage ?? false)
-            && $answer === ($settings->fallbackMessage ?? '');
-
         $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
 
         try {
             Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
                 'sessionId' => $sessionId,
-                'isFallback' => (int) $isFallback,
+                'isFallback' => (int) $isError,
                 'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
                 'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
                 'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
@@ -308,7 +330,7 @@ class ChatService extends Component
         $apiKey = App::parseEnv($settings->claudeApiKey);
         if (!$apiKey)
             return 'Fout: Geen Claude API Key geconfigureerd.';
-        return new ClaudeProvider($apiKey, $settings->claudeModel ?: 'claude-sonnet-4-5');
+        return new ClaudeProvider($apiKey, $settings->claudeModel ?: 'claude-sonnet-4-6');
     }
 
     private function makeGeminiProvider($settings): AiInterface|string

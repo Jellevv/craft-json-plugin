@@ -5,6 +5,7 @@ namespace jelle\craftjsonplugin\services;
 use Craft;
 use craft\elements\Entry;
 use yii\base\Component;
+use jelle\craftjsonplugin\jobs\GenerateEmbeddingJob;
 
 class JsonService extends Component
 {
@@ -21,7 +22,7 @@ class JsonService extends Component
         $this->normalize = new NormalizationService();
     }
 
-    public function pushSingleEntry(int $elementId): bool
+    public function pushSingleEntry(int $elementId, bool $fromQueue = false): bool
     {
         $element = Craft::$app->getElements()->getElementById($elementId);
 
@@ -31,7 +32,21 @@ class JsonService extends Component
 
         $entry = $this->prepareEntryData($element);
         $this->db->upsertEntry($entry);
-        $this->embeddings->generateAndSaveEmbeddings($entry);
+
+        $this->clearPluginCache();
+
+        $settings = \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
+        $hasEmbeddings = !empty(\craft\helpers\App::parseEnv($settings->openaiApiKey ?? ''));
+
+        if ($hasEmbeddings) {
+            if ($fromQueue) {
+                $this->embeddings->generateAndSaveEmbeddings($entry);
+            } else {
+                Craft::$app->getQueue()->push(
+                    new GenerateEmbeddingJob(['entryId' => $elementId])
+                );
+            }
+        }
 
         return true;
     }
@@ -49,6 +64,7 @@ class JsonService extends Component
         $offset = 0;
         $synced = 0;
         $syncedIds = [];
+        $queue = Craft::$app->getQueue();
 
         while (true) {
             $entries = Entry::find()
@@ -62,8 +78,11 @@ class JsonService extends Component
 
             foreach ($entries as $entry) {
                 $data = $this->prepareEntryData($entry);
+
                 $this->db->upsertEntry($data);
-                $this->embeddings->generateAndSaveEmbeddings($data);
+
+                $queue->push(new GenerateEmbeddingJob(['entryId' => $entry->id]));
+
                 $syncedIds[] = $entry->id;
                 $synced++;
             }
@@ -73,13 +92,22 @@ class JsonService extends Component
 
         $this->deleteStaleEntries($syncedIds);
 
-        $cache = Craft::$app->getCache();
-        $cache->delete('jsonplugin_all_embeddings');
-        // Flush all cached chat context so the next question re-reads from the
-        // freshly synced DB — prevents stale/untitled entries surviving in cache.
-        $cache->flush();
+        $this->clearPluginCache();
 
         return ['success' => true, 'synced' => $synced];
+    }
+
+    private function clearPluginCache(): void
+    {
+        $cache = Craft::$app->getCache();
+        $settings = \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
+
+        $cache->delete('jsonplugin_all_embeddings_' . md5(json_encode($settings->includedSections ?? null)));
+        $cache->delete('jsonplugin_all_embeddings');
+
+        foreach (['openai', 'groq', 'claude', 'gemini'] as $provider) {
+            $cache->delete("chat_entries_all_{$provider}");
+        }
     }
 
     private function deleteStaleEntries(array $activeIds): void

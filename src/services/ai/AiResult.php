@@ -7,7 +7,9 @@ class AiResult
     public function __construct(
         public string $content,
         public bool $success = true,
-        public ?string $error = null
-    ) {}
+        public ?string $error = null,
+        public ?string $finishReason = null
+    ) {
+    }
 }
 

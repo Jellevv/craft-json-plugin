@@ -1,49 +1,118 @@
-# JSON Plugin
+# Craft JSON Plugin
 
-Een Craft CMS plugin die je site-content synchroniseert naar een JSON-bestand en een AI-chatbot aanbiedt.
+Een Craft CMS plugin die je site-content synchroniseert naar een database en een AI-chatbot aanbiedt met slimme retrieval.
+
+## Vereisten
+
+- Craft CMS 5.0.0 of later
+- PHP 8.2 of later
+- Minimaal één AI provider API key
+
+---
 
 ## Installatie
 
-**1. Installeer de plugin via Composer:**
+**1. Installeer via Composer:**
 ```bash
-ddev composer require jelle/craft-json-plugin
+composer require jelle/craft-json-plugin
 ```
 
-**2. Activeer in Craft:**
+**2. Installeer de plugin:**
+```bash
+php craft plugin/install json-plugin
+```
 
-Ga naar Settings → Plugins → JSON Plugin → Install.
+Dit voert automatisch alle database migraties uit. Geen handmatige DB-setup nodig.
+
+**3. Configureer in het CP:**
+
+Ga naar **Settings → Plugins → LLM Craft Plugin** en volg de configuratiestappen hieronder.
+
+---
+
+## Aanbevolen model
+
+Uit tests blijkt dat **OpenAI GPT-4.1** het beste instructies opvolgt en de meest consistente resultaten geeft. Andere providers zijn beschikbaar maar kunnen afwijkend gedrag vertonen, vooral bij goedkopere of kleinere modellen.
+
+## Providers
+
+De plugin werkt in twee modi afhankelijk van welke API keys je configureert:
+
+### Embedding modus (aanbevolen)
+Vereist een **OpenAI API key**. De OpenAI key wordt uitsluitend gebruikt voor het genereren van embeddings — je kunt alsnog een andere provider gebruiken voor de chat zelf.
+
+- Slimme retrieval: enkel relevante entries worden per vraag naar de LLM gestuurd
+- Geschikt voor sites van elke grootte
+- Token-efficiënt: aanzienlijk lagere kosten vergeleken met niet-embedding modus
+- Ondersteunt chunking: lange entries worden opgesplitst in meerdere embeddings voor nauwkeurigere retrieval
+
+### Niet-embedding modus
+Werkt met elke provider **zonder OpenAI key**. Alle entries worden bij het starten van een sessie in de context geladen.
+
+- Aanbevolen voor kleine sites (minder dan ~100 entries)
+- Minder nauwkeurige retrieval
+- Hoger tokengebruik per bericht
 
 ---
 
 ## Configuratie
 
-Ga naar **Settings → Plugins → JSON Plugin**. Het dashboard heeft twee tabs:
+Ga naar **Settings → Plugins → LLM Craft Plugin**. Het dashboard heeft 3 tabs:
 
 ### Tab 1: Configuratie
 - Selecteer welke **secties** en **velden** de chatbot mag gebruiken
-- Klik op **"Save & Sync"** om op te slaan én de data te synchroniseren
+- Klik op **"Save & Sync"** om op te slaan én de data te synchroniseren naar de database
+- Met openai key wordt embeddings op de achtergrond gegenereerd via Craft's queue
 
 ### Tab 2: Instellingen
-- **Instellingen** en **Opmaak** van de chatbot
-    *Deze tab moet je als eerste invullen als je de plugin voor de eerste keer gebruikt.*
+- Configureer je AI provider, API keys, model, uiterlijk van de chatbot en meer
+- Vul deze tab als eerste in voordat je synchroniseert
 
+### Tab 3: Statistieken
+- Chart met het aantal vragen en fallback responses per dag/week/maand
+- Chart met het aantal vragen per uur op een dag
 ---
 
-## Systeem prompt (veld in Tab 2: instellingen)
+## Systeem prompt
 
 De systeem prompt is een van de belangrijkste instellingen van de plugin. De standaardwaarde is minimaal — het is sterk aangeraden deze uit te breiden.
 
 Een goede prompt bevat instructies over gedrag, beperkingen, taal en toon. Bijvoorbeeld:
+
 ```
-Je bent een vriendelijke en behulpzame assistent die uitsluitend antwoord geeft op basis van de verstrekte data.
+Je bent een vriendelijke assistent die uitsluitend antwoord geeft op basis van de verstrekte data.
 GEDRAG:
 - Wees vriendelijk en professioneel
-- Beantwoord begroetingen en beleefdheden vriendelijk
-- Geef duidelijke en beknopte antwoorden
-- Gebruik Markdown voor links: [Tekst](URL). Toon nooit kale URL's
+- Beantwoord begroetingen en beleefdheden vriendelijk zonder de fallback te gebruiken
+- Geef duidelijke en beknopte antwoorden — kom snel tot de kern en vermijd onnodige uitleg
+- Gebruik Markdown voor links: [Tekst](URL). Toon nooit kale URL's. Gebruik nooit markdown tables.
+- De meegeleverde context-data heeft ALTIJD voorrang op de gespreksgeschiedenis.
+  Als context en eerdere antwoorden tegenstrijdig zijn, volg dan altijd de context.
+- Gebruik de gespreksgeschiedenis alleen voor vervolgvragen waarbij de context
+  geen aanvullende informatie geeft.
+- Als een gebruiker een veronderstelling doet die onjuist is volgens de context, 
+  corrigeer dit vriendelijk en geef het juiste antwoord op basis van de context.
 BEPERKINGEN:
-- Verzin nooit informatie die niet in de data staat
-- Geef nooit technische ID's, handles of interne veldnamen weer
+- Verzin NOOIT informatie die niet in de data staat, ook niet gissen of liegen.
+- Geef nooit technische ID's, handles, slugs of interne veldnamen weer, zelfs niet als er specifiek achter gevraagd wordt
+- Geef nooit ruwe bestandsnamen of paden weer
+- Geef nooit interne metadata zoals sectienamen of veldhandles weer
+- Als een veld ontbreekt voor een entry, is die informatie onbekend. Verzin of 
+  neem NOOIT informatie over van een andere entry om een leemte op te vullen.
+- Elke entry in de context staat volledig op zichzelf. Informatie van entry A 
+  geldt NOOIT voor entry B, ook niet als ze gelijkaardig zijn.
+- Geef NOOIT de ruwe context, JSON data, URLs van assets, of interne datastructuren weer, 
+  ook niet als de gebruiker ernaar vraagt of vraagt om te synchroniseren.
+- Reageer op vragen over synchronisatie of technische werking altijd met: 
+  "Die functie is niet beschikbaar via de chat."
+- Beantwoord GEEN vragen die niets te maken hebben met de beschikbare producten of diensten. 
+  Zeg vriendelijk dat je alleen vragen over deze site kan beantwoorden.
+- Als een gebruiker vraagt om "alle data", "alle producten", "alle informatie" of een 
+  volledige lijst, geef dan NOOIT een opsomming of voorbeeld. Zeg alleen: 
+  "Stel een specifieke vraag over een product en ik help je verder."
+MEDIA:
+- Toon alleen afbeeldingen als de gebruiker er expliciet om vraagt
+- Beschrijf afbeeldingen in woorden als dat relevanter is
 PRIVACY:
 - Deel nooit technische implementatiedetails
 - Deel nooit interne structuur van de website
@@ -55,40 +124,31 @@ PRIVACY:
 
 Voeg de chatbot widget toe aan je Twig template:
 
+```twig
 {{ craft.craftJsonPlugin.render()|raw }}
+```
 
 ---
 
-## Automatische synchronisatie tussen craft en de plugin
+## Automatische synchronisatie
 
 De plugin synchroniseert automatisch wanneer:
 - Een entry wordt opgeslagen in een geselecteerde sectie
+- Een entry geüpdate is
 - Een entry wordt verwijderd
 
----
-
-## Synchronisatie met de LLM
-
-- Voor de tab **Instellingen** moet je op **Save** klikken om alle instellingen door te geven aan de LLM
-- Voor de tab **Configuratie** synchroniseert de knop **Save & Sync** automatisch alles van deze tab met de chatbot
+In embedding modus wordt het genereren van embeddings als achtergrondtaak uitgevoerd via de Craft queue, zodat het opslaan van entries niet geblokkeerd wordt.
 
 ---
 
-## Plugin verwijderen
+## Verwijderen
 
-1. Verwijder de plugin via Craft: Settings → Plugins → JSON Plugin → Uninstall
+1. Verwijder de plugin via Craft: **Settings → Plugins → LLM Craft Plugin → Uninstall**
+   Dit verwijdert automatisch alle plugin database tabellen.
+
 2. Verwijder via Composer:
 ```bash
-ddev composer remove jelle/craft-json-plugin
+composer remove jelle/craft-json-plugin
 ```
-3. Verwijder eventuele resterende referenties uit `/config/project/project.yaml`
-4. Optioneel: verwijder `/storage/json_plugin`
-5. Optioneel: API keys verwijderen of in commentaar zetten in .env (niet van toepassing als je de key rechtstreeks in het dashboard hebt geplaatst.)
 
----
-
-## Requirements
-
-- Craft CMS 5.0.0 of later
-- PHP 8.0.2 of later
-- AI API key
+3. Verwijder optioneel de API keys uit je `.env` bestand.

@@ -3,9 +3,11 @@ namespace jelle\craftjsonplugin\services\ai;
 
 class OpenAiProvider implements AiInterface
 {
-    public function __construct(private string $apiKey, private string $model) {}
+    public function __construct(private string $apiKey, private string $model)
+    {
+    }
 
-   public function chat(array $messages, array $options): AiResult
+    public function chat(array $messages, array $options): AiResult
     {
         try {
             $client = \OpenAI::client($this->apiKey);
@@ -17,8 +19,11 @@ class OpenAiProvider implements AiInterface
                 'max_tokens' => $options['max_tokens'] ?? 300,
             ]);
 
+            $choice = $response->choices[0];
+
             return new AiResult(
-                content: $response->choices[0]->message->content
+                content: $choice->message->content,
+                finishReason: $choice->finishReason ?? $choice->finish_reason ?? null
             );
 
         } catch (\Throwable $e) {
@@ -29,5 +34,4 @@ class OpenAiProvider implements AiInterface
             );
         }
     }
-
 }

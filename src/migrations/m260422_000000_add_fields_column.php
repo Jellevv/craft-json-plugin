@@ -16,7 +16,6 @@ class m260422_000000_add_fields_column extends Migration
             );
         }
 
-        // Also ensure 'updatedAt' exists (used in upsertEntry)
         if (!$this->db->columnExists('{{%jsonplugin_entries}}', 'updatedAt')) {
             $this->addColumn(
                 '{{%jsonplugin_entries}}',

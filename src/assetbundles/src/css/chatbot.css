@@ -20,7 +20,6 @@
     height: 40px !important;
 }
 
-/* Open: gebruik de desktop hoogte-variabele */
 .chat-wrapper:not(.collapsed) {
     height: var(--chat-height, 400px);
 }

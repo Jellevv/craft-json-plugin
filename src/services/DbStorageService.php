@@ -20,18 +20,21 @@ class DbStorageService extends Component
 
         $update = ['fields' => json_encode($fields), 'updatedAt' => date('Y-m-d H:i:s')];
 
-        if (!empty($entry['title']))   $update['title']   = $entry['title'];
-        if (!empty($entry['section'])) $update['section'] = $entry['section'];
-        if (!empty($entry['url']))     $update['url']     = $entry['url'];
+        if (!empty($entry['title']))
+            $update['title'] = $entry['title'];
+        if (!empty($entry['section']))
+            $update['section'] = $entry['section'];
+        if (!empty($entry['url']))
+            $update['url'] = $entry['url'];
 
         Craft::$app->db->createCommand()->upsert(
             '{{%jsonplugin_entries}}',
             [
-                'id'      => $entry['id'],
-                'title'   => $entry['title'] ?? null,
+                'id' => $entry['id'],
+                'title' => $entry['title'] ?? null,
                 'section' => $entry['section'] ?? null,
-                'url'     => $entry['url'] ?? null,
-                'fields'  => json_encode($fields),
+                'url' => $entry['url'] ?? null,
+                'fields' => json_encode($fields),
                 'updatedAt' => date('Y-m-d H:i:s'),
             ],
             $update
@@ -88,35 +91,25 @@ class DbStorageService extends Component
         ];
     }
 
-    public function getAllEmbeddings(?array $includedSections = null): array
+    public function saveEmbedding(int $entryId, array $chunks): void
     {
-        $query = (new Query())
-            ->select(['e.entryId', 'e.embedding'])
-            ->from(['e' => '{{%jsonplugin_embeddings}}'])
-            ->innerJoin(['n' => '{{%jsonplugin_entries}}'], 'n.id = e.entryId');
+        Craft::$app->db->createCommand()
+            ->delete('{{%jsonplugin_embeddings}}', ['entryId' => $entryId])
+            ->execute();
 
-        if (!empty($includedSections)) {
-            $query->where(['n.section' => $includedSections]);
+        foreach ($chunks as $index => $vector) {
+            Craft::$app->db->createCommand()->insert(
+                '{{%jsonplugin_embeddings}}',
+                [
+                    'entryId' => $entryId,
+                    'chunkIndex' => $index,
+                    'embedding' => json_encode($vector),
+                    'dateCreated' => date('Y-m-d H:i:s'),
+                    'dateUpdated' => date('Y-m-d H:i:s'),
+                    'uid' => \craft\helpers\StringHelper::UUID(),
+                ]
+            )->execute();
         }
-
-        $out = [];
-        foreach ($query->all() as $row) {
-            $out[$row['entryId']] = json_decode($row['embedding'], true) ?: [];
-        }
-
-        return $out;
-    }
-
-    public function saveEmbedding(int $entryId, array $vector): void
-    {
-        Craft::$app->db->createCommand()->upsert(
-            '{{%jsonplugin_embeddings}}',
-            ['entryId' => $entryId],
-            [
-                'embedding' => json_encode($vector),
-                'dateUpdated' => date('Y-m-d H:i:s'),
-            ]
-        )->execute();
 
         Craft::$app->getCache()->delete('jsonplugin_all_embeddings');
     }
@@ -128,5 +121,25 @@ class DbStorageService extends Component
             ->execute();
 
         Craft::$app->getCache()->delete('jsonplugin_all_embeddings');
+    }
+
+    public function getAllEmbeddings(?array $includedSections = null): array
+    {
+        $query = (new Query())
+            ->select(['e.entryId', 'e.chunkIndex', 'e.embedding'])
+            ->from(['e' => '{{%jsonplugin_embeddings}}'])
+            ->innerJoin(['n' => '{{%jsonplugin_entries}}'], 'n.id = e.entryId')
+            ->orderBy(['e.entryId' => SORT_ASC, 'e.chunkIndex' => SORT_ASC]);
+
+        if (!empty($includedSections)) {
+            $query->where(['n.section' => $includedSections]);
+        }
+
+        $out = [];
+        foreach ($query->all() as $row) {
+            $out[$row['entryId']][$row['chunkIndex']] = json_decode($row['embedding'], true) ?: [];
+        }
+
+        return $out;
     }
 }

@@ -22,7 +22,7 @@ use craft\services\Plugins;
 
 class JsonPlugin extends Plugin
 {
-    public string $schemaVersion = '1.1.0';
+    public string $schemaVersion = '1.1.1';
     public bool $hasCpSettings = true;
 
     public static function config(): array

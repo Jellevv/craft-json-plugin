@@ -13,11 +13,11 @@
 
 		{{ forms.autosuggestField({ label: 'OpenAI API Key', instructions: 'Voer je OpenAI API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $OPENAI_API_KEY', id: 'openaiApiKey', name: 'openaiApiKey', value: settings.openaiApiKey, placeholder: 'sk-...', suggestEnvVars: true, required: true }) }}
 
-		{{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' }, { label: 'GPT-4o (krachtig)', value: 'gpt-4o' }, { label: 'GPT-4 Turbo', value: 'gpt-4-turbo' }, { label: 'GPT-3.5 Turbo (goedkoopst)', value: 'gpt-3.5-turbo' }] }) }}
+		{{ forms.selectField({ label: 'OpenAI Model', instructions: 'Welk model moet de chatbot gebruiken?', id: 'openaiModel', name: 'openaiModel', value: settings.openaiModel, options: [{ label: 'GPT-4o Mini (snel & goedkoop)', value: 'gpt-4o-mini' },{ label: 'GPT-4o', value: 'gpt-4o' },{ label: 'GPT-4.1 Mini', value: 'gpt-4.1-mini' },{ label: 'GPT-4.1', value: 'gpt-4.1' },{ label: 'GPT-5.4 Mini', value: 'gpt-5.4-mini' },{ label: 'GPT-5.4 (krachtig)', value: 'gpt-5.4' }] }) }}
 
 		{{ forms.autosuggestField({ label: 'Groq API Key', instructions: 'Voer je Groq API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $GROQ_API_KEY', id: 'groqApiKey', name: 'groqApiKey', value: settings.groqApiKey, placeholder: 'gsk_...', suggestEnvVars: true, required: true }) }}
 
-		{{ forms.selectField({ label: 'Groq Model', instructions: 'Welk Groq model moet de chatbot gebruiken?', id: 'groqModel', name: 'groqModel', value: settings.groqModel, options: [{ label: 'Llama 3.3 70B (aanbevolen)', value: 'llama-3.3-70b-versatile' }, { label: 'Llama 3.1 8B (snel & goedkoop)', value: 'llama-3.1-8b-instant' }, { label: 'Llama 4 Scout 17B (preview)', value: 'meta-llama/llama-4-scout-17b-16e-instruct' }, { label: 'Qwen3 32B (preview)', value: 'qwen/qwen3-32b' }] }) }}
+		{{ forms.selectField({ label: 'Groq Model', instructions: 'Welk Groq model moet de chatbot gebruiken?', id: 'groqModel', name: 'groqModel', value: settings.groqModel, options: [{ label: 'Llama 3.3 70B (aanbevolen)', value: 'llama-3.3-70b-versatile' },{ label: 'Llama 3.1 8B (snel & goedkoop)', value: 'llama-3.1-8b-instant' },{ label: 'Llama 4 Scout 17B', value: 'meta-llama/llama-4-scout-17b-16e-instruct' },{ label: 'Llama 4 Maverick 17B', value: 'meta-llama/llama-4-maverick-17b-128e-instruct' },{ label: 'Qwen3 32B', value: 'qwen/qwen3-32b' }] }) }}
 
 		{{ forms.autosuggestField({ label: 'Claude API Key', instructions: 'Voer je Anthropic API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $CLAUDE_API_KEY', id: 'claudeApiKey', name: 'claudeApiKey', value: settings.claudeApiKey, placeholder: 'sk-ant-...', suggestEnvVars: true, required: true }) }}
 
@@ -25,8 +25,8 @@
 
 		{{ forms.autosuggestField({ label: 'Gemini API Key', instructions: 'Voer je Google API sleutel in. Je doet dit door een ENV variabele te gebruiken, bijv: $GEMINI_API_KEY', id: 'geminiApiKey', name: 'geminiApiKey', value: settings.geminiApiKey, placeholder: 'AIza...', suggestEnvVars: true, required: true }) }}
 
-		{{ forms.selectField({ label: 'Gemini Model', instructions: 'Welk Gemini model moet de chatbot gebruiken?', id: 'geminiModel', name: 'geminiModel', value: settings.geminiModel, options: [{ label: 'Gemini 2.0 Flash (aanbevolen)', value: 'gemini-2.0-flash' }, { label: 'Gemini 2.0 Flash Lite (snel & goedkoop)', value: 'gemini-2.0-flash-lite' }, { label: 'Gemini 1.5 Pro (krachtig)', value: 'gemini-1.5-pro' }, { label: '2.5', value: 'gemini-2.5-flash-preview-05-20'}] }) }}
-
+		{{ forms.selectField({ label: 'Gemini Model', instructions: 'Welk Gemini model moet de chatbot gebruiken?', id: 'geminiModel', name: 'geminiModel', value: settings.geminiModel, options: [{ label: 'Gemini 2.5 Flash (aanbevolen)', value: 'gemini-2.5-flash' },{ label: 'Gemini 2.5 Flash Lite (snel & goedkoop)', value: 'gemini-2.5-flash-lite' },{ label: 'Gemini 2.5 Pro (krachtig)', value: 'gemini-2.5-pro' },{ label: 'Gemini 3.1 Flash Lite (preview)', value: 'gemini-3.1-flash-lite-preview' },{ label: 'Gemini 3.1 Pro (preview)', value: 'gemini-3.1-pro-preview' }] }) }}
+		
 		{{ forms.textField({ label: 'Temperature', instructions: 'Hoe creatief mag het model zijn? (0 = strikt en feitelijk, 1 = creatief, max 2). Het is aangeraden om onder 1 te blijven.', id: 'temperature', name: 'temperature', value: settings.temperature, placeholder: '0.5' }) }}
 
 		{{ forms.textField({ label: 'Max antwoordlengte (tokens)', instructions: 'Hoe lang mag het antwoord maximaal zijn? (50 = zeer kort, 300 = normaal, 2000 = zeer lang. 1 token ≈ 0.75 woorden) (min. 50, max. 2000)', id: 'maxTokens', name: 'maxTokens', value: settings.maxTokens, placeholder: '300' }) }}
@@ -35,7 +35,9 @@
 
 		{{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
 
-		{{ forms.textField({ label: 'Max embedding entries (enkel in te vullen bij OpenAI als provider)', instructions: 'Hoeveel relevante entries mogen er per vraag maximaal worden opgehaald? (min. 1, max. 100)', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '3' }) }}
+		{{ forms.textField({ label: 'Max embedding entries (enkel in te vullen bij een actieve OpenAI key)', instructions: 'Hoeveel relevante entries mogen er per vraag maximaal worden opgehaald? (min. 1, max. 100)', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '3' }) }}
+
+		{{ forms.textField({ label: 'Max chunk (enkel in te vullen bij een actieve OpenAI key)', instructions: 'Hoe groot mag 1 embedding zijn? Wordt pas doorgevoerd bij de volgende sync in de "configuratie" tab (min. 200, max. 2000)', id: 'embeddingChunkSize', name: 'embeddingChunkSize', value: settings.embeddingChunkSize, placeholder: '500' }) }}
 
 		{{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent', required: true }) }}
 

@@ -27,16 +27,18 @@ class EmbeddingService extends Component
         $settings = $this->getSettings();
         $apiKey = \craft\helpers\App::parseEnv($settings->openaiApiKey);
 
-        if (!$apiKey) return [];
+        if (!$apiKey)
+            return [];
 
-        $cache    = Craft::$app->getCache();
+        $cache = Craft::$app->getCache();
         $cacheKey = 'jsonplugin_query_emb_' . md5($text);
-        $cached   = $cache->get($cacheKey);
+        $cached = $cache->get($cacheKey);
 
-        if ($cached !== false) return $cached;
+        if ($cached !== false)
+            return $cached;
 
         try {
-            $client   = OpenAI::client($apiKey);
+            $client = OpenAI::client($apiKey);
             $response = $client->embeddings()->create([
                 'model' => $settings->openaiEmbeddingModel ?? 'text-embedding-3-small',
                 'input' => $text,
@@ -58,47 +60,76 @@ class EmbeddingService extends Component
 
     public function generateAndSaveEmbeddings(array $entry): void
     {
-        $lines = [];
+        $chunks = $this->buildChunks($entry);
 
-        foreach (($entry['entry'] ?? []) as $k => $v) {
-            if (in_array($k, ['id', 'url'])) continue;
-            $lines[] = "entry.$k: " . $this->flatten($v);
+        if (empty($chunks))
+            return;
+
+        $vectors = [];
+        foreach ($chunks as $chunk) {
+            $vector = $this->generateEmbedding($chunk);
+            if ($vector) {
+                $vectors[] = $vector;
+            }
         }
 
-        foreach (($entry['fields'] ?? []) as $k => $v) {
-            $lines[] = "field.$k: " . $this->flatten($v);
+        if (!empty($vectors)) {
+            $this->db->saveEmbedding($entry['entry']['id'], $vectors);
+            Craft::$app->getCache()->delete('jsonplugin_all_embeddings');
         }
-
-        if (!$lines) return;
-
-        $embedding = $this->generateEmbedding(implode("\n", $lines));
-
-        if ($embedding) {
-
-    $this->db->saveEmbedding(
-        $entry['entry']['id'],
-        $embedding
-    );
-
-    Craft::$app->getCache()
-        ->delete('jsonplugin_all_embeddings');
-}
-
     }
-    /**
-     * Returns [ entryId => cosineScore ] for the top $top results.
-     */
+
+    private function buildChunks(array $entry): array
+    {
+        $chunks = [];
+        $chunkSize = (int) ($this->getSettings()->embeddingChunkSize ?? 500);
+        
+        $header = '';
+        if (!empty($entry['entry']['title'])) {
+            $header .= 'title: ' . $entry['entry']['title'] . "\n";
+        }
+        if (!empty($entry['entry']['section'])) {
+            $header .= 'section: ' . $entry['entry']['section'] . "\n";
+        }
+
+        $fieldLines = [];
+        foreach (($entry['fields'] ?? []) as $k => $v) {
+            $fieldLines[] = "field.{$k}: " . $this->flatten($v);
+        }
+
+        if (empty($fieldLines)) {
+            if ($header)
+                $chunks[] = $header;
+            return $chunks;
+        }
+
+        $current = $header;
+        foreach ($fieldLines as $line) {
+            if (strlen($current) + strlen($line) > $chunkSize && strlen($current) > strlen($header)) {
+                $chunks[] = trim($current);
+                $current = $header . $line . "\n";
+            } else {
+                $current .= $line . "\n";
+            }
+        }
+
+        if (trim($current) !== trim($header)) {
+            $chunks[] = trim($current);
+        }
+
+        return $chunks;
+    }
     public function getTopEntryScores(string $query, int $top = 5): array
     {
         $queryEmbedding = $this->generateEmbedding($query);
-        if (!$queryEmbedding) return [];
+        if (!$queryEmbedding)
+            return [];
 
-        $settings         = $this->getSettings();
+        $settings = $this->getSettings();
         $includedSections = $settings->includedSections ?? null;
 
-        // Cache key includes sections so a config change gets a fresh pool
-        $cacheKey   = 'jsonplugin_all_embeddings_' . md5(json_encode($includedSections));
-        $cache      = Craft::$app->getCache();
+        $cacheKey = 'jsonplugin_all_embeddings_' . md5(json_encode($includedSections));
+        $cache = Craft::$app->getCache();
         $embeddings = $cache->get($cacheKey);
 
         if ($embeddings === false) {
@@ -106,17 +137,26 @@ class EmbeddingService extends Component
             $cache->set($cacheKey, $embeddings, 3600);
         }
 
-        if (empty($embeddings)) return [];
+        if (empty($embeddings))
+            return [];
 
         $scores = [];
-        foreach ($embeddings as $id => $vector) {
-            $score = $this->cosine($queryEmbedding, $vector);
-            if ($score > 0) {
-                $scores[$id] = $score;
+
+        foreach ($embeddings as $entryId => $chunks) {
+            $bestScore = 0;
+            foreach ($chunks as $vector) {
+                $score = $this->cosine($queryEmbedding, $vector);
+                if ($score > $bestScore) {
+                    $bestScore = $score;
+                }
+            }
+            if ($bestScore > 0) {
+                $scores[$entryId] = $bestScore;
             }
         }
 
-        if (empty($scores)) return [];
+        if (empty($scores))
+            return [];
 
         arsort($scores);
 
@@ -125,7 +165,8 @@ class EmbeddingService extends Component
 
     private function flatten($value): string
     {
-        if (is_array($value)) return json_encode($value);
+        if (is_array($value))
+            return json_encode($value);
         return trim(strip_tags((string) $value));
     }
 
@@ -135,8 +176,8 @@ class EmbeddingService extends Component
 
         foreach ($a as $i => $v) {
             $dot += $v * ($b[$i] ?? 0);
-            $na  += $v * $v;
-            $nb  += ($b[$i] ?? 0) * ($b[$i] ?? 0);
+            $na += $v * $v;
+            $nb += ($b[$i] ?? 0) * ($b[$i] ?? 0);
         }
 
         return ($na && $nb) ? $dot / (sqrt($na) * sqrt($nb)) : 0;

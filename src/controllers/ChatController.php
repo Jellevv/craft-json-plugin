@@ -16,7 +16,7 @@ class ChatController extends Controller
         $request = Craft::$app->getRequest();
         $settings = JsonPlugin::$plugin->getSettings();
 
-        $ip = $request->getUserIP();
+        $ip = $_SERVER['REMOTE_ADDR'] ?? $request->getRemoteIP();
         $cache = Craft::$app->getCache();
         $rateCacheKey = 'chat_ratelimit_' . md5($ip);
 
@@ -45,15 +45,31 @@ class ChatController extends Controller
             ]);
         }
 
-        $sessionId = preg_replace('/[^a-z0-9]/', '', $request->getBodyParam('sessionId') ?? '');
-        $isNewSession = strlen($sessionId) < 5;
+        $sessionId = preg_replace('/[^a-f0-9\-]/', '', strtolower($request->getBodyParam('sessionId') ?? ''));
+        $isNewSession = strlen($sessionId) < 10;
         if ($isNewSession) {
-            $sessionId = bin2hex(random_bytes(8));
+            $sessionId = bin2hex(random_bytes(16));
+        }
+
+        $pageUrl = '';
+        $rawPageUrl = $request->getBodyParam('pageUrl', '');
+        if ($rawPageUrl) {
+            try {
+                $siteUrl = Craft::$app->getSites()->getCurrentSite()->getBaseUrl();
+                if (str_starts_with($rawPageUrl, $siteUrl)) {
+                    $parsedUrl = parse_url($rawPageUrl);
+                    $pageUrl = ($parsedUrl['scheme'] ?? 'https') . '://'
+                        . ($parsedUrl['host'] ?? '')
+                        . ($parsedUrl['path'] ?? '');
+                }
+            } catch (\Throwable $e) {
+                $pageUrl = '';
+            }
         }
 
         try {
             $service = JsonPlugin::$plugin->get('chat');
-            $antwoord = $service->getAiResponse($vraag, $sessionId, $request->getBodyParam('pageUrl'));
+            $antwoord = $service->getAiResponse($vraag, $sessionId, $pageUrl);
 
             $responseData = ['antwoord' => $antwoord];
             if ($isNewSession) {

@@ -20,6 +20,7 @@ class Settings extends Model
     public mixed $maxVraagLength = null;
     public mixed $rateLimit = null;
     public mixed $embeddingTopK = null;
+    public mixed $embeddingChunkSize = null;
     public string $chatbotName = 'Assistent';
     public string $systemPrompt = 'Je bent een behulpzame assistent die uitsluitend antwoord geeft op basis van de verstrekte data.';
     public string $primaryColor = '#006bc2';
@@ -62,6 +63,13 @@ class Settings extends Model
                 'filter',
                 'filter' => function ($value) {
                     return ($value === '' || $value === null) ? 3 : $value;
+                }
+            ],
+            [
+                ['embeddingChunkSize'],
+                'filter',
+                'filter' => function ($value) {
+                    return ($value === '' || $value === null) ? 500 : $value;
                 }
             ],
             [
@@ -137,6 +145,7 @@ class Settings extends Model
             [['maxVraagLength'], 'integer', 'min' => 10, 'max' => 2000],
             [['rateLimit'], 'integer', 'min' => 1, 'max' => 500],
             [['embeddingTopK'], 'integer', 'min' => 1, 'max' => 100],
+            [['embeddingChunkSize'], 'integer', 'min' => 200, 'max' => 2000],
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
             [['useFallbackMessage'], 'boolean'],
