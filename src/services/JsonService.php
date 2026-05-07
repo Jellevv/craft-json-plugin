@@ -90,6 +90,31 @@ class JsonService extends Component
             $offset += $batchSize;
         }
 
+        // Sync Commerce products if installed
+        if (class_exists(\craft\commerce\elements\Product::class)) {
+            $productOffset = 0;
+
+            while (true) {
+                $products = \craft\commerce\elements\Product::find()
+                    ->limit($batchSize)
+                    ->offset($productOffset)
+                    ->all();
+
+                if (empty($products))
+                    break;
+
+                foreach ($products as $product) {
+                    $data = $this->prepareProductData($product);
+                    $this->db->upsertEntry($data);
+                    $queue->push(new GenerateEmbeddingJob(['entryId' => $product->id]));
+                    $syncedIds[] = $product->id;
+                    $synced++;
+                }
+
+                $productOffset += $batchSize;
+            }
+        }
+
         $this->deleteStaleEntries($syncedIds);
 
         $this->clearPluginCache();
@@ -170,6 +195,118 @@ class JsonService extends Component
                 'title' => $entry->title,
                 'section' => $entry->section->handle ?? null,
                 'url' => $entry->url,
+            ],
+            'fields' => $fields,
+        ];
+    }
+
+    public function pushSingleProduct(int $productId, bool $fromQueue = false): bool
+    {
+        if (!class_exists(\craft\commerce\elements\Product::class)) {
+            return false;
+        }
+
+        $product = \craft\commerce\elements\Product::find()
+            ->id($productId)
+            ->one();
+
+        if (!$product) {
+            return false;
+        }
+
+        $entry = $this->prepareProductData($product);
+        $this->db->upsertEntry($entry);
+        $this->clearPluginCache();
+
+        $settings = \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
+        $hasEmbeddings = !empty(\craft\helpers\App::parseEnv($settings->openaiApiKey ?? ''));
+
+        if ($hasEmbeddings) {
+            if ($fromQueue) {
+                $this->embeddings->generateAndSaveEmbeddings($entry);
+            } else {
+                Craft::$app->getQueue()->push(
+                    new GenerateEmbeddingJob(['entryId' => $productId])
+                );
+            }
+        }
+
+        return true;
+    }
+
+    private function prepareProductData(\craft\commerce\elements\Product $product): array
+    {
+        $variants = $product->getVariants();
+
+        $prices = [];
+        $totalStock = 0;
+        $hasStock = false;
+        $optionGroups = [];
+
+        foreach ($variants as $variant) {
+            $prices[] = (float) $variant->price;
+
+            if ($variant->hasUnlimitedStock) {
+                $hasStock = true;
+                $totalStock = null; // unlimited
+            } elseif ($totalStock !== null) {
+                $totalStock += $variant->stock;
+                if ($variant->stock > 0) {
+                    $hasStock = true;
+                }
+            }
+
+            foreach ($variant->getAttributes() as $handle => $value) {
+                if (in_array($handle, ['id', 'productId', 'sku', 'stock', 'price', 'weight', 'width', 'height', 'length', 'sortOrder', 'deletedWithProduct', 'hasUnlimitedStock', 'minQty', 'maxQty'])) {
+                    continue;
+                }
+                if ($value !== null && $value !== '') {
+                    $optionGroups[$handle][] = $value;
+                }
+            }
+        }
+
+        foreach ($optionGroups as $name => $values) {
+            $optionGroups[$name] = array_unique($values);
+        }
+
+        $minPrice = !empty($prices) ? min($prices) : null;
+        $maxPrice = !empty($prices) ? max($prices) : null;
+
+        $priceRange = $minPrice !== null
+            ? ($minPrice === $maxPrice
+                ? '€' . number_format($minPrice, 2, '.', '')
+                : '€' . number_format($minPrice, 2, '.', '') . ' - €' . number_format($maxPrice, 2, '.', ''))
+            : null;
+
+        $fields = [];
+        $fieldLayout = $product->getFieldLayout();
+        if ($fieldLayout) {
+            foreach ($fieldLayout->getCustomFields() as $field) {
+                $handle = $field->handle;
+                try {
+                    $value = $product->getFieldValue($handle);
+                    $fields[$handle] = $this->normalize->normalizeValue($value);
+                } catch (\Throwable $e) {
+                    Craft::error("Commerce field {$handle}: " . $e->getMessage(), 'json-plugin');
+                }
+            }
+        }
+
+        if ($priceRange !== null)
+            $fields['price_range'] = $priceRange;
+        if (!empty($optionGroups))
+            $fields['available_options'] = $optionGroups;
+        $fields['in_stock'] = $hasStock;
+        if ($totalStock !== null)
+            $fields['total_stock'] = $totalStock;
+
+        return [
+            'entry' => [
+                'id' => $product->id,
+                'title' => $product->title,
+                'section' => 'commerce_' . ($product->getType()->handle ?? 'product'),
+                'url' => $product->url,
             ],
             'fields' => $fields,
         ];

@@ -16,11 +16,15 @@ class GenerateEmbeddingJob extends BaseJob
 
         $entries = $db->getEntriesByIds([$this->entryId]);
 
-        if (empty($entries)) {
+        if (!empty($entries)) {
+            $embeddings->generateAndSaveEmbeddings($entries[0]);
             return;
         }
 
-        $embeddings->generateAndSaveEmbeddings($entries[0]);
+        if (class_exists(\craft\commerce\elements\Product::class)) {
+            $json = JsonPlugin::$plugin->get('jsonService');
+            $json->pushSingleProduct($this->entryId, fromQueue: true);
+        }
     }
 
     protected function defaultDescription(): string

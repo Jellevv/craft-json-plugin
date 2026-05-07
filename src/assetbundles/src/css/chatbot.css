@@ -81,6 +81,12 @@
     cursor: pointer;
 }
 
+.chat-header-text {
+    color: white;
+    margin:0; 
+    font-size: 16px;
+}
+
 @media (max-width: 640px) {
     .chat-header {
         height: 48px;
@@ -131,6 +137,7 @@
     border-top: 1px solid #ccc;
     gap: 4px;
     flex-shrink: 0;
+    font-size: 12px;
 }
 
 @media (max-width: 640px) {

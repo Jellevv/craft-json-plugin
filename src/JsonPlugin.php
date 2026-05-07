@@ -118,6 +118,34 @@ class JsonPlugin extends Plugin
                 }
             }
         );
+
+        if (class_exists(\craft\commerce\Plugin::class)) {
+            \yii\base\Event::on(
+                \craft\base\Element::class,
+                \craft\base\Element::EVENT_AFTER_SAVE,
+                function ($event) {
+                    $element = $event->sender;
+                    if (
+                        $element instanceof \craft\commerce\elements\Product &&
+                        !$element->getIsDraft() &&
+                        !$element->getIsRevision()
+                    ) {
+                        $this->get('jsonService')->pushSingleProduct($element->id);
+                    }
+                }
+            );
+
+            \yii\base\Event::on(
+                \craft\base\Element::class,
+                \craft\base\Element::EVENT_BEFORE_DELETE,
+                function ($event) {
+                    $element = $event->sender;
+                    if ($element instanceof \craft\commerce\elements\Product) {
+                        $this->get('jsonService')->deleteEntry($element->id);
+                    }
+                }
+            );
+        }
     }
 
     protected function createSettingsModel(): ?Model

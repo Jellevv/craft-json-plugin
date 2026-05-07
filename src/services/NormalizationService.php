@@ -15,17 +15,22 @@ class NormalizationService extends Component
         }
 
         return array_map(function ($el) use ($isAsset) {
-            $base = $isAsset
-                ? ['type' => 'asset', 'id' => $el->id, 'url' => $el->getUrl()]
-                : ['type' => 'entry', 'id' => $el->id, 'title' => $el->title, 'url' => $el->url];
 
-            if (!$isAsset && $el instanceof Entry) {
-                foreach ($el->getFieldLayout()->getCustomFields() as $f) {
-                    $base[$f->handle] = $this->normalizeValue($el->getFieldValue($f->handle));
-                }
+            if ($isAsset) {
+                return [
+                    'type' => 'asset',
+                    'id' => $el->id,
+                    'url' => $el->getUrl(),
+                ];
             }
 
-            return $base;
+            return [
+                'type' => 'entry',
+                'id' => $el->id,
+                'title' => $el->title,
+                'url' => $el->url,
+            ];
+
         }, $query->all());
     }
 
