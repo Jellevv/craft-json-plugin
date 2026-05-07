@@ -2,7 +2,7 @@
   "name": "jelle/craft-json-plugin",
   "description": "AI Chatbot en JSON export voor Craft CMS",
   "type": "craft-plugin",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "license": "MIT",
   "authors": [
     {
