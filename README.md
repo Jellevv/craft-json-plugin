@@ -150,5 +150,10 @@ In embedding modus wordt het genereren van embeddings als achtergrondtaak uitgev
 ```bash
 composer remove jelle/craft-json-plugin
 ```
+OF
+→ Na uninstall in Craft kan er nog **remove** staan
+   Je kan hier ook nog op klikken om hetzelfde resultaat te krijgen als de composer command.
 
-3. Verwijder optioneel de API keys uit je `.env` bestand.
+3. Verwijder **{{ craft.craftJsonPlugin.render()|raw }}** uit de twig(s) waarop de plugin stond
+
+4. Verwijder optioneel de API keys uit je `.env` bestand.

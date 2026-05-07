@@ -134,7 +134,7 @@ class EmbeddingService extends Component
 
         if ($embeddings === false) {
             $embeddings = $this->db->getAllEmbeddings($includedSections ?: null);
-            $cache->set($cacheKey, $embeddings, 3600);
+            $cache->set($cacheKey, $embeddings, 86400);
         }
 
         if (empty($embeddings))

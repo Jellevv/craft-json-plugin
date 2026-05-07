@@ -16,7 +16,7 @@ class NormalizationService extends Component
 
         return array_map(function ($el) use ($isAsset) {
             $base = $isAsset
-                ? ['type' => 'asset', 'id' => $el->id, 'filename' => $el->title, 'url' => $el->getUrl()]
+                ? ['type' => 'asset', 'id' => $el->id, 'url' => $el->getUrl()]
                 : ['type' => 'entry', 'id' => $el->id, 'title' => $el->title, 'url' => $el->url];
 
             if (!$isAsset && $el instanceof Entry) {
@@ -93,8 +93,8 @@ class NormalizationService extends Component
             if (str_contains($class, 'Money')) {
                 return $this->normalizeMoney($value);
             }
-            if (str_contains($class, 'Address')) {
-                return (string) $value;
+            if ($value instanceof \craft\elements\db\AddressQuery) {
+                return null; // handled in JsonService::prepareEntryData
             }
             return method_exists($value, '__toString') ? strip_tags((string) $value) : '[Object]';
         }

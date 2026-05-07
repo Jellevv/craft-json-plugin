@@ -149,7 +149,21 @@ class JsonService extends Component
                 }
             }
         }
+        $addresses = \craft\elements\Address::find()
+            ->ownerId($entry->id)
+            ->all();
 
+        foreach ($addresses as $address) {
+            $fields[$address->fieldId ? \Craft::$app->fields->getFieldById($address->fieldId)?->handle ?? 'address' : 'address'] = array_filter([
+                'address1' => $address->addressLine1 ?? null,
+                'address2' => $address->addressLine2 ?? null,
+                'address3' => $address->addressLine3 ?? null,
+                'city' => $address->locality ?? null,
+                'zip' => $address->postalCode ?? null,
+                'state' => $address->administrativeArea ?? null,
+                'country' => $address->countryCode ?? null,
+            ]);
+        }
         return [
             'entry' => [
                 'id' => $entry->id,

@@ -34,7 +34,8 @@ class ChatService extends Component
         $aiProvider = $this->getAiProvider();
 
         if (is_string($aiProvider)) {
-            return $aiProvider;
+            Craft::error('AI provider configuratiefout: ' . $aiProvider, 'json-plugin');
+            return 'De chatbot is momenteel niet beschikbaar. Neem contact op met de beheerder.';
         }
 
         $cache = Craft::$app->getCache();
@@ -312,32 +313,24 @@ class ChatService extends Component
     private function makeOpenAiProvider($settings): AiInterface|string
     {
         $apiKey = App::parseEnv($settings->openaiApiKey);
-        if (!$apiKey)
-            return 'Fout: Geen OpenAI API Key geconfigureerd.';
         return new OpenAiProvider($apiKey, $settings->openaiModel ?: 'gpt-4o-mini');
     }
 
     private function makeGroqProvider($settings): AiInterface|string
     {
         $apiKey = App::parseEnv($settings->groqApiKey);
-        if (!$apiKey)
-            return 'Fout: Geen Groq API Key geconfigureerd.';
         return new GroqProvider($apiKey, $settings->groqModel ?: 'llama-3.3-70b-versatile');
     }
 
     private function makeClaudeProvider($settings): AiInterface|string
     {
         $apiKey = App::parseEnv($settings->claudeApiKey);
-        if (!$apiKey)
-            return 'Fout: Geen Claude API Key geconfigureerd.';
         return new ClaudeProvider($apiKey, $settings->claudeModel ?: 'claude-sonnet-4-6');
     }
 
     private function makeGeminiProvider($settings): AiInterface|string
     {
         $apiKey = App::parseEnv($settings->geminiApiKey);
-        if (!$apiKey)
-            return 'Fout: Geen Gemini API Key geconfigureerd.';
         return new GeminiProvider($apiKey, $settings->geminiModel ?: 'gemini-2.0-flash');
     }
 }

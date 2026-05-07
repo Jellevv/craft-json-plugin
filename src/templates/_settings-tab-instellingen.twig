@@ -7,6 +7,7 @@
 		</div>
 		<div class="warning">
 			<p>Let op: Niet verplichte velden die je leeg laat nemen automatisch de waarden van de placeholders.</p>
+			<p>Tip: Vergeet niet opnieuw te syncen nadat je van provider bent veranderd!</p>
 		</div>
 
 		{{ forms.selectField({ label: 'AI Provider', instructions: 'Welke AI provider wil je gebruiken? \n(OpenAI bevat embedding. Embedding is iets trager maar veel goedkoper. Geen Embedding zal veel tokens kosten.)', id: 'aiProvider', name: 'aiProvider', value: settings.aiProvider, options: [{ label: 'OpenAI (ChatGpt) + embedding', value: 'openai' }, { label: 'Groq (Llama)', value: 'groq' }, { label: 'Anthropic (Claude)', value: 'claude' }, { label: 'Google (Gemini)', value: 'gemini' }] }) }}
