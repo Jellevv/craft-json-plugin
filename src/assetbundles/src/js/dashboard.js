@@ -33,28 +33,87 @@ document.addEventListener('DOMContentLoaded', function () {
             if (syncHiddenInput) syncHiddenInput.value = '1';
         }
     }
+
     const sectionCheckboxes = document.querySelectorAll('.section-checkbox');
-    const fieldsEmptyNotice = document.getElementById('fields-empty-notice');
+    const selectAllSections = document.getElementById('select-all-sections');
+
+    const updateSelectAllState = () => {
+        const total = sectionCheckboxes.length;
+        const checked = [...sectionCheckboxes].filter(cb => cb.checked).length;
+        selectAllSections.checked = checked === total;
+        selectAllSections.indeterminate = checked > 0 && checked < total;
+    };
 
     const updateFieldGroups = () => {
         const checkedSections = [...sectionCheckboxes]
             .filter(cb => cb.checked)
             .map(cb => cb.dataset.section);
 
-        const allGroups = document.querySelectorAll('.section-fields-group');
-        allGroups.forEach(group => {
+        document.querySelectorAll('.section-fields-group').forEach(group => {
             const isVisible = checkedSections.includes(group.dataset.section);
             group.style.display = isVisible ? '' : 'none';
-        });
 
-        if (fieldsEmptyNotice) {
-            fieldsEmptyNotice.style.display = checkedSections.length === 0 ? '' : 'none';
-        }
+            // Uncheck all fields when section is deselected
+            if (!isVisible) {
+                group.querySelectorAll('.field-checkbox').forEach(cb => cb.checked = false);
+                const selectAll = group.querySelector('.select-all-fields');
+                if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+            }
+        });
     };
+
+    const updateSectionSelectAllFields = (section) => {
+        const group = document.querySelector(`.section-fields-group[data-section="${section}"]`);
+        if (!group) return;
+        const fields = [...group.querySelectorAll('.field-checkbox')];
+        const selectAll = group.querySelector('.select-all-fields');
+        if (!selectAll) return;
+        const checkedCount = fields.filter(cb => cb.checked).length;
+        selectAll.checked = checkedCount === fields.length;
+        selectAll.indeterminate = checkedCount > 0 && checkedCount < fields.length;
+    };
+
+    selectAllSections?.addEventListener('change', () => {
+        sectionCheckboxes.forEach(cb => {
+            cb.checked = selectAllSections.checked;
+        });
+        updateFieldGroups();
+    });
+
+    sectionCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            updateSelectAllState();
+            updateFieldGroups();
+        });
+    });
+
+    document.querySelectorAll('.select-all-fields').forEach(selectAll => {
+        const section = selectAll.dataset.section;
+        const group = document.querySelector(`.section-fields-group[data-section="${section}"]`);
+
+        selectAll.addEventListener('change', () => {
+            group.querySelectorAll('.field-checkbox').forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            selectAll.indeterminate = false;
+        });
+    });
+
+    document.querySelectorAll('.field-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+            updateSectionSelectAllFields(cb.dataset.section);
+        });
+    });
+
+    updateSelectAllState();
+    updateFieldGroups();
+    document.querySelectorAll('.section-fields-group').forEach(group => {
+        updateSectionSelectAllFields(group.dataset.section);
+    });
 
     sectionCheckboxes.forEach(cb => cb.addEventListener('change', updateFieldGroups));
     updateFieldGroups();
-    
+
     if (selectedTab !== 'statistieken') return;
 
     const periodTitleElement = document.getElementById('settings-stats-period-title');

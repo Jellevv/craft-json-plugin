@@ -162,10 +162,17 @@ class JsonService extends Component
     {
         $fields = [];
         $fieldLayout = $entry->getFieldLayout();
+        $settings = \jelle\craftjsonplugin\JsonPlugin::getInstance()->getSettings();
+        $includedFields = $settings->includedFields ?? [];
 
         if ($fieldLayout) {
             foreach ($fieldLayout->getCustomFields() as $field) {
                 $handle = $field->handle;
+
+                if (!empty($includedFields) && !in_array($handle, $includedFields)) {
+                    continue;
+                }
+
                 try {
                     $value = $entry->getFieldValue($handle);
                     $fields[$handle] = $this->normalize->normalizeValue($value);
@@ -248,7 +255,7 @@ class JsonService extends Component
 
             if ($variant->hasUnlimitedStock) {
                 $hasStock = true;
-                $totalStock = null; // unlimited
+                $totalStock = null;
             } elseif ($totalStock !== null) {
                 $totalStock += $variant->stock;
                 if ($variant->stock > 0) {

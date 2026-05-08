@@ -183,23 +183,51 @@ class JsonPlugin extends Plugin
             $sectionFieldMap[$section->handle] = array_unique($handles);
         }
 
+        if (class_exists(\craft\commerce\Plugin::class)) {
+            $productTypes = \craft\commerce\Plugin::getInstance()->getProductTypes()->getAllProductTypes();
+
+            foreach ($productTypes as $productType) {
+                $handle = 'commerce_' . $productType->handle;
+
+                $sectionOptions[] = [
+                    'label' => $productType->name . ' (Commerce)',
+                    'value' => $handle,
+                ];
+
+                $handles = [];
+                $layout = $productType->getFieldLayout();
+                if ($layout) {
+                    foreach ($layout->getCustomFields() as $f) {
+                        $handles[] = $f->handle;
+                    }
+                }
+
+                $variantLayout = $productType->getVariantFieldLayout();
+                if ($variantLayout) {
+                    foreach ($variantLayout->getCustomFields() as $f) {
+                        $handles[] = $f->handle;
+                    }
+                }
+
+                $sectionFieldMap[$handle] = array_unique($handles);
+            }
+        }
+
         $period = \Craft::$app->getRequest()->getParam('period', 'week');
         $offset = (int) \Craft::$app->getRequest()->getParam('offset', 0);
-
         $hourlyDate = \Craft::$app->getRequest()->getParam('hourlyDate', date('Y-m-d'));
 
         return \Craft::$app->view->renderTemplate('json-plugin/settings', [
             'settings' => $this->getSettings(),
             'sectionOptions' => $sectionOptions,
             'fieldOptions' => $fieldOptions,
+            'sectionFieldMap' => $sectionFieldMap,
             'stats' => $this->getStats($period, $offset),
             'hourlyStats' => $this->getHourlyStats($hourlyDate),
             'statsPeriod' => $period,
             'statsOffset' => $offset,
             'selectedHourlyDate' => $hourlyDate,
-            'sectionFieldMap' => $sectionFieldMap,
         ], \craft\web\View::TEMPLATE_MODE_CP);
-
     }
 
     public function getCpTemplateRoots(): array

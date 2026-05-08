@@ -18,8 +18,14 @@
       <div class="instructions"><p>Welke <strong>secties</strong> moeten worden meegegeven aan de chatbot?</p></div>
     </div>
     <div class="input">
+      <div class="checkbox-wrapper checkbox-wrapper--select-all">
+        <label>
+          <input type="checkbox" id="select-all-sections">
+          <strong>Alle secties</strong>
+        </label>
+      </div>
       {% for option in sectionOptions %}
-        <div class="checkbox-wrapper" style="margin-bottom: 6px;">
+        <div class="checkbox-wrapper">
           <label>
             <input
               type="checkbox"
@@ -46,38 +52,37 @@
 
     <div id="fields-by-section">
 
-      <p id="fields-empty-notice" style="color: #8f98a3; font-style: italic;">
-        Selecteer eerst een sectie om de bijbehorende velden te zien.
-      </p>
-
       {% for section in sectionOptions %}
         {% set sectionFields = sectionFieldMap[section.value] ?? [] %}
-        <div
-          class="section-fields-group"
-          data-section="{{ section.value }}"
-          style="display: none; margin-bottom: 20px;"
-        >
-          <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #3f4d5a; border-bottom: 1px solid #e3e5e8; padding-bottom: 6px;">
-            {{ section.label }}
-          </h4>
+        <div class="section-fields-group" data-section="{{ section.value }}">
+
+          <div class="section-fields-heading">
+            <span>{{ section.label }}</span>
+            {% if sectionFields is not empty %}
+              <label class="select-all-fields-label">
+                <input type="checkbox" class="select-all-fields" data-section="{{ section.value }}">
+                Alles
+              </label>
+            {% endif %}
+          </div>
 
           {% if sectionFields is empty %}
-            <p style="color: #8f98a3; font-size: 12px; font-style: italic;">Geen velden gevonden voor deze sectie.</p>
+            <p class="section-fields-empty">Geen velden gevonden voor deze sectie.</p>
           {% else %}
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 16px;">
+            <div class="section-fields-grid">
               {% for fieldHandle in sectionFields %}
-                {# Find the label for this field handle #}
                 {% set fieldLabel = fieldHandle %}
                 {% for opt in fieldOptions %}
                   {% if opt.value == fieldHandle %}{% set fieldLabel = opt.label %}{% endif %}
                 {% endfor %}
 
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <label class="field-checkbox-label">
                   <input
                     type="checkbox"
                     name="includedFields[]"
                     value="{{ fieldHandle }}"
                     class="field-checkbox"
+                    data-section="{{ section.value }}"
                     {{ fieldHandle in settings.includedFields ? 'checked' : '' }}
                   >
                   {{ fieldLabel }}
