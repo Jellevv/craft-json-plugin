@@ -137,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDiv.textContent = 'Je vraag is te lang. Maximum is ' + maxVraagLength + ' tekens.'
             chatContainer.appendChild(errorDiv)
             chatContainer.scrollTop = chatContainer.scrollHeight
-            return
         }
 
         const userDiv = document.createElement('div')
