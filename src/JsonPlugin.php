@@ -169,6 +169,20 @@ class JsonPlugin extends Plugin
             $fieldOptions[] = ['label' => $field->name, 'value' => $field->handle];
         }
 
+        $sectionFieldMap = [];
+        foreach ($allSections as $section) {
+            $handles = [];
+            foreach ($section->getEntryTypes() as $entryType) {
+                $layout = $entryType->getFieldLayout();
+                if ($layout) {
+                    foreach ($layout->getCustomFields() as $f) {
+                        $handles[] = $f->handle;
+                    }
+                }
+            }
+            $sectionFieldMap[$section->handle] = array_unique($handles);
+        }
+
         $period = \Craft::$app->getRequest()->getParam('period', 'week');
         $offset = (int) \Craft::$app->getRequest()->getParam('offset', 0);
 
@@ -182,7 +196,8 @@ class JsonPlugin extends Plugin
             'hourlyStats' => $this->getHourlyStats($hourlyDate),
             'statsPeriod' => $period,
             'statsOffset' => $offset,
-            'selectedHourlyDate' => $hourlyDate, // This fixes your Twig error!
+            'selectedHourlyDate' => $hourlyDate,
+            'sectionFieldMap' => $sectionFieldMap,
         ], \craft\web\View::TEMPLATE_MODE_CP);
 
     }

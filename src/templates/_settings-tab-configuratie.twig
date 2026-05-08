@@ -12,7 +12,84 @@
 
   <hr />
 
-  {{ forms.checkboxGroupField({ label: 'Sections', instructions: 'Welke <strong>secties</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedSections', name: 'includedSections', options: sectionOptions, values: settings.includedSections }) }}
+  <div class="field">
+    <div class="heading">
+      <label class="required">Sections</label>
+      <div class="instructions"><p>Welke <strong>secties</strong> moeten worden meegegeven aan de chatbot?</p></div>
+    </div>
+    <div class="input">
+      {% for option in sectionOptions %}
+        <div class="checkbox-wrapper" style="margin-bottom: 6px;">
+          <label>
+            <input
+              type="checkbox"
+              name="includedSections[]"
+              value="{{ option.value }}"
+              class="section-checkbox"
+              data-section="{{ option.value }}"
+              {{ option.value in settings.includedSections ? 'checked' : '' }}
+            >
+            {{ option.label }}
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
 
-  {{ forms.checkboxGroupField({ label: 'Fields', instructions: 'Welke <strong>velden</strong> moeten er worden meegegeven aan de chatbot?', id: 'includedFields', name: 'includedFields', options: fieldOptions, values: settings.includedFields }) }}
+  <hr />
+
+  <div class="field">
+    <div class="heading">
+      <label>Fields</label>
+      <div class="instructions"><p>Welke <strong>velden</strong> moeten worden meegegeven aan de chatbot?</p></div>
+    </div>
+
+    <div id="fields-by-section">
+
+      <p id="fields-empty-notice" style="color: #8f98a3; font-style: italic;">
+        Selecteer eerst een sectie om de bijbehorende velden te zien.
+      </p>
+
+      {% for section in sectionOptions %}
+        {% set sectionFields = sectionFieldMap[section.value] ?? [] %}
+        <div
+          class="section-fields-group"
+          data-section="{{ section.value }}"
+          style="display: none; margin-bottom: 20px;"
+        >
+          <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #3f4d5a; border-bottom: 1px solid #e3e5e8; padding-bottom: 6px;">
+            {{ section.label }}
+          </h4>
+
+          {% if sectionFields is empty %}
+            <p style="color: #8f98a3; font-size: 12px; font-style: italic;">Geen velden gevonden voor deze sectie.</p>
+          {% else %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 16px;">
+              {% for fieldHandle in sectionFields %}
+                {# Find the label for this field handle #}
+                {% set fieldLabel = fieldHandle %}
+                {% for opt in fieldOptions %}
+                  {% if opt.value == fieldHandle %}{% set fieldLabel = opt.label %}{% endif %}
+                {% endfor %}
+
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  <input
+                    type="checkbox"
+                    name="includedFields[]"
+                    value="{{ fieldHandle }}"
+                    class="field-checkbox"
+                    {{ fieldHandle in settings.includedFields ? 'checked' : '' }}
+                  >
+                  {{ fieldLabel }}
+                </label>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <input type="hidden" id="settings-doSync" name="settings[doSync]" value="0">
 </div>

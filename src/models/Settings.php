@@ -27,6 +27,7 @@ class Settings extends Model
     public mixed $chatWidth = null;
     public mixed $chatHeight = null;
     public string $welcomeMessage = 'Hallo! Ik ben {name}, hoe kan ik je helpen?';
+    public array $includedSections = [];
     public array $includedFields = [];
 
     //public array $includedVolumes = [];

@@ -33,7 +33,28 @@ document.addEventListener('DOMContentLoaded', function () {
             if (syncHiddenInput) syncHiddenInput.value = '1';
         }
     }
+    const sectionCheckboxes = document.querySelectorAll('.section-checkbox');
+    const fieldsEmptyNotice = document.getElementById('fields-empty-notice');
 
+    const updateFieldGroups = () => {
+        const checkedSections = [...sectionCheckboxes]
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.section);
+
+        const allGroups = document.querySelectorAll('.section-fields-group');
+        allGroups.forEach(group => {
+            const isVisible = checkedSections.includes(group.dataset.section);
+            group.style.display = isVisible ? '' : 'none';
+        });
+
+        if (fieldsEmptyNotice) {
+            fieldsEmptyNotice.style.display = checkedSections.length === 0 ? '' : 'none';
+        }
+    };
+
+    sectionCheckboxes.forEach(cb => cb.addEventListener('change', updateFieldGroups));
+    updateFieldGroups();
+    
     if (selectedTab !== 'statistieken') return;
 
     const periodTitleElement = document.getElementById('settings-stats-period-title');
