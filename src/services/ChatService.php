@@ -221,8 +221,9 @@ class ChatService extends Component
         }
         $cache->set($historyKey, $history, 86400);
 
-        $this->logStat($sessionId, $settings, $answer);
-
+        $hitTokenLimit = ($result->finishReason ?? '') === 'length';
+        $this->logStat($sessionId, $settings, $answer, $hitTokenLimit);
+        
         return $answer;
     }
 
@@ -280,14 +281,16 @@ class ChatService extends Component
         );
     }
 
-    private function logStat(string $sessionId, $settings, string $answer, bool $isError = false): void
+    private function logStat(string $sessionId, $settings, string $answer, bool $hitTokenLimit = false, bool $hitQuestionLimit = false): void
     {
         $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
 
         try {
             Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
                 'sessionId' => $sessionId,
-                'isFallback' => (int) $isError,
+                'isFallback' => 0,
+                'hitTokenLimit' => (int) $hitTokenLimit,
+                'hitQuestionLimit' => (int) $hitQuestionLimit,
                 'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
                 'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
                 'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),

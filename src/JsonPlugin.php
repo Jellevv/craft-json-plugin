@@ -221,8 +221,9 @@ class JsonPlugin extends Plugin
 
         $rows = $db->createCommand("
         SELECT DATE(dateAsked) as date, 
-               COUNT(*) as total,
-               SUM(isFallback) as fallbacks
+            COUNT(*) as total,
+            SUM(hitTokenLimit) as tokenLimits,
+            SUM(hitQuestionLimit) as questionLimits
         FROM {{%jsonplugin_stats}}
         WHERE dateAsked >= :since
         AND dateAsked < :until
@@ -244,7 +245,8 @@ class JsonPlugin extends Plugin
             $result[] = [
                 'date' => $date,
                 'total' => (int) ($dataByDate[$date]['total'] ?? 0),
-                'fallbacks' => (int) ($dataByDate[$date]['fallbacks'] ?? 0),
+                'tokenLimits' => (int) ($dataByDate[$date]['tokenLimits'] ?? 0),
+                'questionLimits' => (int) ($dataByDate[$date]['questionLimits'] ?? 0),
             ];
         }
 

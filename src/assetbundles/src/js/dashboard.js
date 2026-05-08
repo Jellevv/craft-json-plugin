@@ -8,7 +8,7 @@ import 'flatpickr/dist/plugins/monthSelect/style.css'
 
 document.addEventListener('DOMContentLoaded', function () {
     const selectedTab = document.querySelector('.plugin-tabs')?.dataset.selectedTab || 'configuratie';
-    
+
     const providerDropdown = document.getElementById('settings-aiProvider');
     if (providerDropdown) {
         const aiProviders = ['openai', 'groq', 'claude', 'gemini'];
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (periodTitleElement && window.statsData?.length > 0) {
         const firstEntryDate = new Date(window.statsData[0].date);
         const lastEntryDate = new Date(window.statsData[window.statsData.length - 1].date);
-        
+
         if (window.statsPeriod === 'day') {
             periodTitleElement.textContent = firstEntryDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
         } else if (window.statsPeriod === 'month') {
@@ -82,10 +82,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         borderWidth: 2
                     },
                     {
-                        label: 'Fallback antwoorden',
-                        data: window.statsData.map(row => parseInt(row.fallbacks)),
+                        label: 'Antwoord afgekapt (token limiet)',
+                        data: window.statsData.map(row => parseInt(row.tokenLimits)),
                         backgroundColor: chartStyle === 'bar' ? 'rgba(229, 76, 60, 0.85)' : 'rgba(229, 76, 60, 0.1)',
                         borderColor: 'rgba(229, 76, 60, 0.85)',
+                        fill: chartStyle === 'line',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Vraag te lang geblokkeerd',
+                        data: window.statsData.map(row => parseInt(row.questionLimits)),
+                        backgroundColor: chartStyle === 'bar' ? 'rgba(255, 165, 0, 0.85)' : 'rgba(255, 165, 0, 0.1)',
+                        borderColor: 'rgba(255, 165, 0, 0.85)',
                         fill: chartStyle === 'line',
                         tension: 0.3,
                         borderWidth: 2
@@ -110,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const pickedDate = selectedDates[0];
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 let dayOffset = 0;
                 if (window.statsPeriod === 'day') {
                     dayOffset = Math.round((pickedDate - today) / 86400000);
@@ -133,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (hourlyChartCanvas && window.hourlyStatsData) {
         const hourlyDataBuckets = new Array(24).fill(0);
         window.hourlyStatsData.forEach(row => { hourlyDataBuckets[parseInt(row.hour)] = parseInt(row.total); });
-        
+
         new Chart(hourlyChartCanvas, {
             type: 'bar',
             data: {

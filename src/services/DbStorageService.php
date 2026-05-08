@@ -67,7 +67,6 @@ class DbStorageService extends Component
             ->where(['id' => $ids])
             ->all();
 
-        // Preserve the order of $ids
         $map = [];
         foreach ($rows as $row) {
             $map[$row['id']] = $this->rowToEntry($row);

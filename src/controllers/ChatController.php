@@ -39,6 +39,23 @@ class ChatController extends Controller
         }
 
         if (mb_strlen($vraag) > $maxVraagLength) {
+            $rawSessionId = preg_replace('/[^a-f0-9\-]/', '', strtolower($request->getBodyParam('sessionId') ?? ''));
+            $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
+            try {
+                Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
+                    'sessionId' => $rawSessionId ?: 'unknown',
+                    'isFallback' => 0,
+                    'hitTokenLimit' => 0,
+                    'hitQuestionLimit' => 1,
+                    'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
+                    'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
+                    'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
+                    'uid' => \craft\helpers\StringHelper::UUID(),
+                ])->execute();
+            } catch (\Throwable $e) {
+                Craft::error('Error logging question limit stat: ' . $e->getMessage(), 'json-plugin');
+            }
+
             return $this->asJson([
                 'error' => true,
                 'antwoord' => "Je vraag is te lang. Het maximum is {$maxVraagLength} tekens."
