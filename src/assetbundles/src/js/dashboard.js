@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.querySelectorAll('.section-fields-group').forEach(group => {
             const isVisible = checkedSections.includes(group.dataset.section);
-            group.style.display = isVisible ? '' : 'none';
+            group.style.display = isVisible ? 'block' : 'none';
 
             // Uncheck all fields when section is deselected
             if (!isVisible) {
@@ -110,9 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.section-fields-group').forEach(group => {
         updateSectionSelectAllFields(group.dataset.section);
     });
-
-    sectionCheckboxes.forEach(cb => cb.addEventListener('change', updateFieldGroups));
-    updateFieldGroups();
 
     if (selectedTab !== 'statistieken') return;
 
