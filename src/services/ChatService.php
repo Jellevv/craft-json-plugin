@@ -181,11 +181,6 @@ class ChatService extends Component
             $system .= "\nUser page: {$safePageUrl}";
         }
 
-        if ($settings->useFallbackMessage ?? false) {
-            $system .= "\n\nFALLBACK REGEL: Gebruik deze boodschap ALLEEN als het onderwerp of de persoon volledig ontbreekt in de bovenstaande context: \"{$settings->fallbackMessage}\"\n"
-                . "Gebruik de fallback NOOIT als het onderwerp of de persoon wél in de context staat — ook niet als de aanname van de gebruiker onjuist is. Corrigeer in dat geval vriendelijk.";
-        }
-
         $maxHistory = (int) ($settings->maxHistoryTurns ?? 6); // 6 = 3 user+assistant pairs
 
         $result = $aiProvider->chat(
@@ -209,10 +204,6 @@ class ChatService extends Component
             $answer = preg_replace('/\[[^\]]*$/', '', $answer);
             $answer = preg_replace('/\([^\)]*$/', '', $answer);
             $answer = rtrim($answer, '[( ') . ' *(antwoord afgekapt — stel een specifiekere vraag)*';
-        }
-
-        if (($settings->useFallbackMessage ?? false) && str_contains($answer, '[FALLBACK]')) {
-            $answer = $settings->fallbackMessage;
         }
 
         $history[] = ['role' => 'assistant', 'content' => $answer];
@@ -288,7 +279,6 @@ class ChatService extends Component
         try {
             Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
                 'sessionId' => $sessionId,
-                'isFallback' => 0,
                 'hitTokenLimit' => (int) $hitTokenLimit,
                 'hitQuestionLimit' => (int) $hitQuestionLimit,
                 'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),

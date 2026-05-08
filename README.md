@@ -69,7 +69,7 @@ Ga naar **Settings → Plugins → LLM Craft Plugin**. Het dashboard heeft 3 tab
 - Vul deze tab als eerste in voordat je synchroniseert
 
 ### Tab 3: Statistieken
-- Chart met het aantal vragen en fallback responses per dag/week/maand
+- Chart met het aantal vragen en limieten responses per dag/week/maand
 - Chart met het aantal vragen per uur op een dag
 ---
 
@@ -83,7 +83,7 @@ Een goede prompt bevat instructies over gedrag, beperkingen, taal en toon. Bijvo
 Je bent een vriendelijke assistent die uitsluitend antwoord geeft op basis van de verstrekte data.
 GEDRAG:
 - Wees vriendelijk en professioneel
-- Beantwoord begroetingen en beleefdheden vriendelijk zonder de fallback te gebruiken
+- Beantwoord begroetingen en beleefdheden vriendelijk
 - Geef duidelijke en beknopte antwoorden — kom snel tot de kern en vermijd onnodige uitleg
 - Gebruik Markdown voor links: [Tekst](URL). Toon nooit kale URL's. Gebruik nooit markdown tables.
 - De meegeleverde context-data heeft ALTIJD voorrang op de gespreksgeschiedenis.

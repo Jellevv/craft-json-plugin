@@ -27,9 +27,6 @@ class Settings extends Model
     public mixed $chatWidth = null;
     public mixed $chatHeight = null;
     public string $welcomeMessage = 'Hallo! Ik ben {name}, hoe kan ik je helpen?';
-    public bool $useFallbackMessage = false;
-    public string $fallbackMessage = 'Sorry, ik heb geen informatie over dit onderwerp. Neem gerust contact met ons op voor meer hulp.';
-    public array $includedSections = [];
     public array $includedFields = [];
 
     //public array $includedVolumes = [];
@@ -139,7 +136,7 @@ class Settings extends Model
                 }
             ],
 
-            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage', 'fallbackMessage'], 'string'],
+            [['openaiApiKey', 'openaiModel', 'chatbotName', 'primaryColor', 'systemPrompt', 'welcomeMessage'], 'string'],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
             [['maxTokens'], 'integer', 'min' => 50, 'max' => 2000],
             [['maxVraagLength'], 'integer', 'min' => 10, 'max' => 2000],
@@ -148,15 +145,7 @@ class Settings extends Model
             [['embeddingChunkSize'], 'integer', 'min' => 200, 'max' => 2000],
             [['chatWidth'], 'integer', 'min' => 280, 'max' => 600],
             [['chatHeight'], 'integer', 'min' => 280, 'max' => 900],
-            [['useFallbackMessage'], 'boolean'],
             [['includedSections', 'includedFields'], 'safe'],
-            [
-                ['fallbackMessage'],
-                'required',
-                'when' => function ($model) {
-                    return $model->useFallbackMessage === true;
-                }
-            ],
             [['aiProvider', 'groqApiKey', 'groqModel', 'claudeApiKey', 'claudeModel', 'geminiApiKey', 'geminiModel'], 'string'],
             [['aiProvider'], 'in', 'range' => ['openai', 'groq', 'claude', 'gemini']],
             [

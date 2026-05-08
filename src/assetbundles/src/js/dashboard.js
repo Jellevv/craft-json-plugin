@@ -32,18 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const syncHiddenInput = document.querySelector('#settings-doSync');
             if (syncHiddenInput) syncHiddenInput.value = '1';
         }
-
-        const fallbackLightswitch = document.querySelector('#settings-useFallbackMessage-field .lightswitch');
-        const fallbackTextarea = document.querySelector('#settings-fallbackMessage');
-        if (fallbackLightswitch && fallbackTextarea) {
-            const updateTextareaState = () => {
-                const isEnabled = fallbackLightswitch.classList.contains('on');
-                fallbackTextarea.disabled = !isEnabled;
-                fallbackTextarea.style.opacity = isEnabled ? '1' : '0.4';
-            };
-            updateTextareaState();
-            fallbackLightswitch.addEventListener('click', () => setTimeout(updateTextareaState, 50));
-        }
     }
 
     if (selectedTab !== 'statistieken') return;
@@ -82,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         borderWidth: 2
                     },
                     {
-                        label: 'Antwoord afgekapt (token limiet)',
+                        label: 'Max antwoordlengte (token limiet)',
                         data: window.statsData.map(row => parseInt(row.tokenLimits)),
                         backgroundColor: chartStyle === 'bar' ? 'rgba(229, 76, 60, 0.85)' : 'rgba(229, 76, 60, 0.1)',
                         borderColor: 'rgba(229, 76, 60, 0.85)',
@@ -91,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         borderWidth: 2
                     },
                     {
-                        label: 'Vraag te lang geblokkeerd',
+                        label: 'Max vraaglengte (teken limiet)',
                         data: window.statsData.map(row => parseInt(row.questionLimits)),
                         backgroundColor: chartStyle === 'bar' ? 'rgba(255, 165, 0, 0.85)' : 'rgba(255, 165, 0, 0.1)',
                         borderColor: 'rgba(255, 165, 0, 0.85)',

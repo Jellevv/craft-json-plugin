@@ -11,7 +11,6 @@ class Install extends Migration
             $this->createTable('{{%jsonplugin_stats}}', [
                 'id'               => $this->primaryKey(),
                 'sessionId'        => $this->string()->notNull(),
-                'isFallback'       => $this->boolean()->notNull()->defaultValue(false),
                 'hitTokenLimit'    => $this->boolean()->notNull()->defaultValue(false),
                 'hitQuestionLimit' => $this->boolean()->notNull()->defaultValue(false),
                 'dateAsked'        => $this->dateTime()->notNull(),

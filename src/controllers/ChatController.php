@@ -44,7 +44,6 @@ class ChatController extends Controller
             try {
                 Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
                     'sessionId' => $rawSessionId ?: 'unknown',
-                    'isFallback' => 0,
                     'hitTokenLimit' => 0,
                     'hitQuestionLimit' => 1,
                     'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
