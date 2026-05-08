@@ -131,19 +131,6 @@ class DbStorageService extends Component
             ->innerJoin(['n' => '{{%jsonplugin_entries}}'], 'n.id = e.entryId')
             ->orderBy(['e.entryId' => SORT_ASC, 'e.chunkIndex' => SORT_ASC]);
 
-        $includedSections = $settings->includedSections ?? null;
-
-        // Always include Commerce product sections alongside configured sections
-        if (!empty($includedSections) && class_exists(\craft\commerce\elements\Product::class)) {
-            $commerceSections = (new \yii\db\Query())
-                ->select(['DISTINCT section'])
-                ->from('{{%jsonplugin_entries}}')
-                ->where(['like', 'section', 'commerce_'])
-                ->column();
-
-            $includedSections = array_merge($includedSections, $commerceSections);
-        }
-
         $out = [];
         foreach ($query->each(100) as $row) {
             $out[$row['entryId']][$row['chunkIndex']] = json_decode($row['embedding'], true) ?: [];
