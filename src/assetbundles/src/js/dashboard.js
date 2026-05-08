@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAllSections = document.getElementById('select-all-sections');
 
     const updateSelectAllState = () => {
+        if (!selectAllSections) return;
         const total = sectionCheckboxes.length;
         const checked = [...sectionCheckboxes].filter(cb => cb.checked).length;
         selectAllSections.checked = checked === total;
