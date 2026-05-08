@@ -9,23 +9,25 @@ class Install extends Migration
     {
         if (!$this->db->tableExists('{{%jsonplugin_stats}}')) {
             $this->createTable('{{%jsonplugin_stats}}', [
-                'id' => $this->primaryKey(),
-                'sessionId' => $this->string()->notNull(),
-                'isFallback' => $this->boolean()->notNull()->defaultValue(false),
-                'dateAsked' => $this->dateTime()->notNull(),
-                'dateCreated' => $this->dateTime()->notNull(),
-                'dateUpdated' => $this->dateTime()->notNull(),
-                'uid' => $this->uid(),
+                'id'               => $this->primaryKey(),
+                'sessionId'        => $this->string()->notNull(),
+                'isFallback'       => $this->boolean()->notNull()->defaultValue(false),
+                'hitTokenLimit'    => $this->boolean()->notNull()->defaultValue(false),
+                'hitQuestionLimit' => $this->boolean()->notNull()->defaultValue(false),
+                'dateAsked'        => $this->dateTime()->notNull(),
+                'dateCreated'      => $this->dateTime()->notNull(),
+                'dateUpdated'      => $this->dateTime()->notNull(),
+                'uid'              => $this->uid(),
             ]);
         }
 
         if (!$this->db->tableExists('{{%jsonplugin_entries}}')) {
             $this->createTable('{{%jsonplugin_entries}}', [
-                'id' => $this->integer()->notNull(),
-                'title' => $this->string()->null(),
-                'section' => $this->string()->null(),
-                'url' => $this->string()->null(),
-                'fields' => $this->longText()->notNull(),
+                'id'        => $this->integer()->notNull(),
+                'title'     => $this->string()->null(),
+                'section'   => $this->string()->null(),
+                'url'       => $this->string()->null(),
+                'fields'    => $this->longText()->notNull(),
                 'updatedAt' => $this->dateTime()->null(),
                 'PRIMARY KEY([[id]])',
             ]);
@@ -33,13 +35,13 @@ class Install extends Migration
 
         if (!$this->db->tableExists('{{%jsonplugin_embeddings}}')) {
             $this->createTable('{{%jsonplugin_embeddings}}', [
-                'id' => $this->primaryKey(),
-                'entryId' => $this->integer()->notNull(),
-                'chunkIndex' => $this->integer()->notNull()->defaultValue(0),
-                'embedding' => $this->longText()->notNull(),
+                'id'          => $this->primaryKey(),
+                'entryId'     => $this->integer()->notNull(),
+                'chunkIndex'  => $this->integer()->notNull()->defaultValue(0),
+                'embedding'   => $this->longText()->notNull(),
                 'dateCreated' => $this->dateTime()->notNull(),
                 'dateUpdated' => $this->dateTime()->notNull(),
-                'uid' => $this->uid(),
+                'uid'         => $this->uid(),
             ]);
 
             $this->createIndex(
