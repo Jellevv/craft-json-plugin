@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const sectionCheckboxes = document.querySelectorAll('.section-checkbox');
-    const selectAllSections = document.getElementById('select-all-sections');
+    const selectAllSections = document.getElementById('settings-select-all-sections');
 
     const updateSelectAllState = () => {
         if (!selectAllSections) return;
