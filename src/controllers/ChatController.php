@@ -101,4 +101,29 @@ class ChatController extends Controller
             ]);
         }
     }
+
+    public function actionLogQuestionLimit(): Response
+    {
+        $this->requirePostRequest();
+        $request = Craft::$app->getRequest();
+
+        $rawSessionId = preg_replace('/[^a-f0-9\-]/', '', strtolower($request->getBodyParam('sessionId') ?? ''));
+        $nowUtc = new \DateTime('now', new \DateTimeZone('UTC'));
+
+        try {
+            Craft::$app->getDb()->createCommand()->insert('{{%jsonplugin_stats}}', [
+                'sessionId' => $rawSessionId ?: 'unknown',
+                'hitTokenLimit' => 0,
+                'hitQuestionLimit' => 1,
+                'dateAsked' => $nowUtc->format('Y-m-d H:i:s'),
+                'dateCreated' => $nowUtc->format('Y-m-d H:i:s'),
+                'dateUpdated' => $nowUtc->format('Y-m-d H:i:s'),
+                'uid' => \craft\helpers\StringHelper::UUID(),
+            ])->execute();
+        } catch (\Throwable $e) {
+            Craft::error('Error logging question limit: ' . $e->getMessage(), 'json-plugin');
+        }
+
+        return $this->asJson(['success' => true]);
+    }
 }

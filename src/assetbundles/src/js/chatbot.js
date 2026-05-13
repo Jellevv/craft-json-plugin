@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     // ── Vraag versturen ────────────────────────────────────────
+    // ── Vraag versturen ────────────────────────────────────────
     const stuurVraag = async () => {
         const vraagTekst = vraagInput.value.trim()
         if (!vraagTekst) return
@@ -137,6 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDiv.textContent = 'Je vraag is te lang. Maximum is ' + maxVraagLength + ' tekens.'
             chatContainer.appendChild(errorDiv)
             chatContainer.scrollTop = chatContainer.scrollHeight
+
+            fetch('/actions/json-plugin/chat/log-question-limit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ sessionId })
+            }).catch(() => { })
+
+            return
         }
 
         const userDiv = document.createElement('div')
@@ -148,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const history = JSON.parse(localStorage.getItem('chatHistory_' + sessionId) || '[]')
         history.push({ role: 'user', content: vraagTekst })
-
         if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY)
         localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
 
@@ -188,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
             assistantDiv.innerHTML = safeAntwoord
 
             history.push({ role: 'assistant', content: safeAntwoord })
-
             if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY)
             localStorage.setItem('chatHistory_' + sessionId, JSON.stringify(history))
 
