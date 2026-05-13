@@ -74,12 +74,13 @@ document.addEventListener('DOMContentLoaded', function () {
         selectAll.indeterminate = checkedCount > 0 && checkedCount < fields.length;
     };
 
-    selectAllSections?.addEventListener('change', () => {
-        sectionCheckboxes.forEach(cb => {
-            cb.checked = selectAllSections.checked;
+    if (selectAllSections) {
+        selectAllSections.addEventListener('change', function () {
+            sectionCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateFieldGroups();
+            updateSelectAllState();
         });
-        updateFieldGroups();
-    });
+    }
 
     sectionCheckboxes.forEach(cb => {
         cb.addEventListener('change', () => {

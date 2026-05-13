@@ -90,28 +90,38 @@ class JsonService extends Component
             $offset += $batchSize;
         }
 
-        // Sync Commerce products if installed
         if (class_exists(\craft\commerce\elements\Product::class)) {
-            $productOffset = 0;
+            $commerceSections = array_filter(
+                $settings->includedSections ?? [],
+                fn($s) => str_starts_with($s, 'commerce_')
+            );
 
-            while (true) {
-                $products = \craft\commerce\elements\Product::find()
-                    ->limit($batchSize)
-                    ->offset($productOffset)
-                    ->all();
+            if (!empty($commerceSections)) {
+                $productOffset = 0;
 
-                if (empty($products))
-                    break;
+                while (true) {
+                    $products = \craft\commerce\elements\Product::find()
+                        ->limit($batchSize)
+                        ->offset($productOffset)
+                        ->all();
 
-                foreach ($products as $product) {
-                    $data = $this->prepareProductData($product);
-                    $this->db->upsertEntry($data);
-                    $queue->push(new GenerateEmbeddingJob(['entryId' => $product->id]));
-                    $syncedIds[] = $product->id;
-                    $synced++;
+                    if (empty($products))
+                        break;
+
+                    foreach ($products as $product) {
+                        $handle = 'commerce_' . ($product->getType()->handle ?? 'product');
+                        if (!in_array($handle, $commerceSections))
+                            continue; // skip unselected types
+
+                        $data = $this->prepareProductData($product);
+                        $this->db->upsertEntry($data);
+                        $queue->push(new GenerateEmbeddingJob(['entryId' => $product->id]));
+                        $syncedIds[] = $product->id;
+                        $synced++;
+                    }
+
+                    $productOffset += $batchSize;
                 }
-
-                $productOffset += $batchSize;
             }
         }
 
