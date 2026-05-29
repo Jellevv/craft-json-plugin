@@ -130,6 +130,10 @@ class DbStorageService extends Component
             ->innerJoin(['n' => '{{%jsonplugin_entries}}'], 'n.id = e.entryId')
             ->orderBy(['e.entryId' => SORT_ASC, 'e.chunkIndex' => SORT_ASC]);
 
+        if (!empty($includedSections)) {
+            $query->andWhere(['n.section' => $includedSections]);
+        }
+
         $out = [];
         foreach ($query->each(100) as $row) {
             $out[$row['entryId']][$row['chunkIndex']] = json_decode($row['embedding'], true) ?: [];

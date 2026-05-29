@@ -36,9 +36,11 @@
 
 		{{ forms.textField({ label: 'Rate limit (vragen per uur)', instructions: 'Maximaal aantal vragen per IP-adres per uur. Let op: gebruikers achter hetzelfde netwerk delen dit limiet. (min. 1, max. 500)', id: 'rateLimit', name: 'rateLimit', value: settings.rateLimit, placeholder: '50' }) }}
 
-		{{ forms.textField({ label: 'Max embedding entries (enkel in te vullen bij een actieve OpenAI key)', instructions: 'Hoeveel relevante entries mogen er per vraag maximaal worden opgehaald? (min. 1, max. 100)', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '3' }) }}
+		{{ forms.textField({ label: 'Max embedding entries (enkel in te vullen bij een actieve OpenAI key)', instructions: 'Hoeveel relevante entries mogen er per vraag maximaal worden opgehaald? (min. 1, max. 100)', id: 'embeddingTopK', name: 'embeddingTopK', value: settings.embeddingTopK, placeholder: '5' }) }}
 
 		{{ forms.textField({ label: 'Max chunk (enkel in te vullen bij een actieve OpenAI key)', instructions: 'Hoe groot mag 1 embedding zijn? Wordt pas doorgevoerd bij de volgende sync in de "configuratie" tab (min. 200, max. 2000)', id: 'embeddingChunkSize', name: 'embeddingChunkSize', value: settings.embeddingChunkSize, placeholder: '500' }) }}
+
+		<hr/>	
 
 		{{ forms.textField({ label: 'Chatbot naam', instructions: 'De naam van de chatbot, zichtbaar voor bezoekers.', id: 'chatbotName', name: 'chatbotName', value: settings.chatbotName, placeholder: 'Assistent', required: true }) }}
 
@@ -46,7 +48,7 @@
 
 		<hr/>
 
-		{{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen. (Niks invullen = #006bc2)', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
+		{{ forms.colorField({ label: 'Primaire kleur', instructions: 'Kleur van de header en knoppen. (Veld leeglaten = #006bc2 - Marineblauw)', id: 'primaryColor', name: 'primaryColor', value: settings.primaryColor }) }}
 
 		{{ forms.textField({ label: 'Breedte (px)', instructions: 'Minimaal 280px, maximaal 600px.', id: 'chatWidth', name: 'chatWidth', value: settings.chatWidth, placeholder: '300' }) }}
 
